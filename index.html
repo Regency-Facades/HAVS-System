@@ -21,6 +21,8 @@
             margin: 0; padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--wa-bg);
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-blend-mode: overlay;
             height: 100vh;
             height: -webkit-fill-available;
             display: flex;
@@ -72,8 +74,19 @@
             flex: 1; padding: 10px 15px; border-radius: 20px;
             border: none; outline: none; font-size: 1rem; background: white;
         }
-        .icon-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--wa-text-grey); padding: 5px; }
-        .icon-btn.active { color: var(--wa-green-btn); }
+        .send-btn {
+            background: var(--wa-header-light);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         .action-btn {
             background-color: var(--wa-header-light); color: white; border: none;
             padding: 8px 16px; border-radius: 15px; margin: 5px 5px 0 0;
@@ -149,20 +162,6 @@
             padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; cursor: pointer;
         }
         .time-presets button:hover { background: var(--wa-header-light); color: white; }
-        .voice-result {
-            background: #f5f5f5; border: 1px dashed #128C7E;
-            border-radius: 8px; padding: 10px; margin: 8px 0;
-            font-style: italic; color: #333;
-        }
-        .confirm-bar {
-            display: flex; gap: 8px; margin-top: 8px; justify-content: center;
-        }
-        .confirm-bar button {
-            padding: 8px 16px; border-radius: 15px; border: none;
-            font-size: 0.85rem; cursor: pointer; font-weight: bold;
-        }
-        .confirm-bar .btn-edit { background: #FF9800; color: white; }
-        .confirm-bar .btn-ok { background: var(--wa-green-btn); color: white; }
         
         .search-container {
             background: #f9f9f9;
@@ -240,38 +239,6 @@
             flex: 1;
             margin: 5px 0 !important;
         }
-        
-        /* Inline input for voice capture */
-        .inline-input-container {
-            margin-top: 10px;
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .inline-input {
-            flex: 1;
-            padding: 10px 15px;
-            border: 1px solid #ccc;
-            border-radius: 20px;
-            font-size: 1rem;
-            outline: none;
-        }
-        .inline-input:focus {
-            border-color: var(--wa-header-light);
-        }
-        .inline-send-btn {
-            background: var(--wa-header-light);
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            font-size: 1.2rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
     </style>
 </head>
 <body>
@@ -285,8 +252,7 @@
     <div id="chat-container"></div>
     <div id="input-area">
         <input type="text" id="text-input">
-        <button class="icon-btn" id="mic-btn">&#127908;</button>
-        <button class="icon-btn" id="send-btn">&#10148;</button>
+        <button class="send-btn" id="send-btn">&#10148;</button>
     </div>
 
     <div id="setup-modal" class="modal">
@@ -305,8 +271,6 @@
             <input type="text" id="setup-role">
             <p style="font-size:0.85rem; color:#666; margin:10px 0 5px;">Company Logo (optional):</p>
             <input type="file" id="setup-logo" accept="image/*">
-            <br>
-            <button id="test-voice-btn" class="secondary" style="margin:10px 0;">&#128266; Test Voice</button>
             <br>
             <button id="setup-save">Save & Start</button>
         </div>
@@ -355,55 +319,12 @@
             currentToolSelection: null,
             currentPhoto: null,
             stream: null,
-            pendingField: '',
-            pendingValue: ''
+            pendingField: ''
         };
 
         const chatContainer = document.getElementById('chat-container');
         const textInput = document.getElementById('text-input');
-        const micBtn = document.getElementById('mic-btn');
         const sendBtn = document.getElementById('send-btn');
-
-        let voicesLoaded = false;
-        let selectedVoice = null;
-
-        function loadVoices() {
-            if (!('speechSynthesis' in window)) return;
-            var voices = window.speechSynthesis.getVoices();
-            if (voices.length > 0) {
-                voicesLoaded = true;
-                var gbVoice = voices.find(function(v) { return v.lang && v.lang.toLowerCase().startsWith('en-gb'); });
-                var enVoice = voices.find(function(v) { return v.lang && v.lang.toLowerCase().startsWith('en'); });
-                selectedVoice = gbVoice || enVoice || voices[0];
-            }
-        }
-
-        if ('speechSynthesis' in window) {
-            loadVoices();
-            window.speechSynthesis.onvoiceschanged = loadVoices;
-            var voicePoll = setInterval(function() {
-                loadVoices();
-                if (voicesLoaded) clearInterval(voicePoll);
-            }, 500);
-        }
-
-        function speak(text) {
-            if (!('speechSynthesis' in window)) return;
-            window.speechSynthesis.cancel();
-            setTimeout(function() {
-                var utterance = new SpeechSynthesisUtterance(text);
-                if (selectedVoice) {
-                    utterance.voice = selectedVoice;
-                    utterance.lang = selectedVoice.lang;
-                } else {
-                    utterance.lang = 'en-GB';
-                }
-                utterance.rate = 0.95;
-                utterance.pitch = 1.0;
-                utterance.volume = 1.0;
-                window.speechSynthesis.speak(utterance);
-            }, 100);
-        }
 
         window.onload = async function() {
             await loadToolDB();
@@ -483,7 +404,6 @@
             div.appendChild(ts);
             chatContainer.appendChild(div);
             chatContainer.scrollTop = chatContainer.scrollHeight;
-            speak(text);
         }
 
         function addUserBubble(text) {
@@ -545,20 +465,23 @@
 
         function askOperativeName() {
             state.step = 'ASK_NAME';
-            addAppBubble('What is the operative\'s name? Speak or type it, then confirm.');
-            startVoiceCapture('name');
+            addAppBubble('What is the operative\'s name? Type it below and tap send.');
+            textInput.value = '';
+            textInput.focus();
         }
 
         function askOperativeEmployer() {
             state.step = 'ASK_EMPLOYER';
             addAppBubble('Who is the employer or agency?');
-            startVoiceCapture('employer');
+            textInput.value = '';
+            textInput.focus();
         }
 
         function askOperativeArea() {
             state.step = 'ASK_AREA';
             addAppBubble('What area or zone are they working in?');
-            startVoiceCapture('area');
+            textInput.value = '';
+            textInput.focus();
         }
 
         function askToolSelection() {
@@ -567,82 +490,43 @@
             showToolSearch();
         }
 
-        function startVoiceCapture(field) {
-            state.pendingField = field;
-            state.pendingValue = '';
-            textInput.value = '';
-            textInput.focus();
-            showVoiceCaptureUI();
-        }
+        function handleInput(text) {
+            var value = text.trim();
+            if (!value) return;
 
-        function confirmPendingValue(value) {
-            var field = state.pendingField;
-            state.pendingValue = value.trim();
-            if (field === 'name') {
-                state.currentOperative.name = state.pendingValue;
-                addUserBubble(state.pendingValue);
+            addUserBubble(value);
+            textInput.value = '';
+
+            if (state.step === 'ASK_NAME') {
+                state.currentOperative.name = value;
                 askOperativeEmployer();
-            } else if (field === 'employer') {
-                state.currentOperative.employer = state.pendingValue;
-                addUserBubble(state.pendingValue);
+            } else if (state.step === 'ASK_EMPLOYER') {
+                state.currentOperative.employer = value;
                 askOperativeArea();
-            } else if (field === 'area') {
-                state.currentOperative.area = state.pendingValue;
-                addUserBubble(state.pendingValue);
+            } else if (state.step === 'ASK_AREA') {
+                state.currentOperative.area = value;
                 addAppBubble('Logged: ' + state.currentOperative.name + ' from ' + state.currentOperative.employer + ' in ' + state.currentOperative.area + '.');
                 askToolSelection();
+            } else if (state.step === 'END') {
+                var lower = value.toLowerCase();
+                if (lower.includes('report') || lower.includes('generate') || lower.includes('finish') || lower.includes('done')) {
+                    addUserBubble('Generate Report');
+                    openSignature();
+                } else if (lower.includes('add') || lower.includes('new') || lower.includes('another') || lower.includes('tool')) {
+                    addUserBubble('Add Another Tool');
+                    askToolSelection();
+                } else {
+                    addAppBubble('Please type "add another tool" or "generate report".');
+                }
             }
         }
 
-        function showVoiceCaptureUI() {
-            var html = '<div class="voice-result" id="voice-result-display">';
-            html += '<em>Listening... speak now or type below</em>';
-            html += '</div>';
-            html += '<div class="inline-input-container">';
-            html += '<input type="text" class="inline-input" id="inline-text-input">';
-            html += '<button class="inline-send-btn" onclick="submitInlineInput()">&#10148;</button>';
-            html += '</div>';
-            html += '<div class="confirm-bar" id="confirm-bar" style="display:none;">';
-            html += '<button class="btn-edit" onclick="editPendingValue()">Edit</button>';
-            html += '<button class="btn-ok" onclick="confirmFromUI()">Confirm</button>';
-            html += '</div>';
-            addHTMLBubble(html);
-        }
-
-        function submitInlineInput() {
-            var inlineInput = document.getElementById('inline-text-input');
-            if (inlineInput && inlineInput.value.trim()) {
-                var text = inlineInput.value.trim();
-                state.pendingValue = text;
-                updateVoiceResultDisplay(text);
-            }
-        }
-
-        function updateVoiceResultDisplay(text) {
-            var el = document.getElementById('voice-result-display');
-            if (el) {
-                el.innerHTML = '<strong>Heard:</strong> "' + text + '"';
-                document.getElementById('confirm-bar').style.display = 'flex';
-            }
-        }
-
-        function editPendingValue() {
-            var current = state.pendingValue || '';
-            var inlineInput = document.getElementById('inline-text-input');
-            if (inlineInput) {
-                inlineInput.value = current;
-                inlineInput.focus();
-            }
-            var el = document.getElementById('voice-result-display');
-            if (el) el.innerHTML = '<em>Edit the text above and tap the send arrow</em>';
-            document.getElementById('confirm-bar').style.display = 'none';
-        }
-
-        function confirmFromUI() {
-            var inlineInput = document.getElementById('inline-text-input');
-            var val = (inlineInput && inlineInput.value.trim()) || state.pendingValue;
-            if (val) confirmPendingValue(val);
-        }
+        sendBtn.addEventListener('click', function() {
+            if (textInput.value.trim()) handleInput(textInput.value.trim());
+        });
+        textInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && textInput.value.trim()) handleInput(textInput.value.trim());
+        });
 
         function showToolSearch() {
             var html = '<div class="search-container">';
@@ -765,69 +649,6 @@
             document.getElementById('time-confirm-btn').click();
         }
 
-        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        var recognition = null;
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = 'en-GB';
-        }
-
-        function startListening() {
-            if (!recognition) { textInput.focus(); return; }
-            micBtn.classList.add('active');
-            try { recognition.start(); } catch (e) { recognition.stop(); setTimeout(function(){ recognition.start(); }, 200); }
-            recognition.onresult = function(e) {
-                var text = e.results[0][0].transcript;
-                textInput.value = text;
-                micBtn.classList.remove('active');
-                handleVoiceResult(text);
-            };
-            recognition.onerror = function() { micBtn.classList.remove('active'); };
-            recognition.onend = function() { micBtn.classList.remove('active'); };
-        }
-
-        function handleVoiceResult(text) {
-            if (state.step === 'ASK_NAME' || state.step === 'ASK_EMPLOYER' || state.step === 'ASK_AREA') {
-                state.pendingValue = text;
-                updateVoiceResultDisplay(text);
-            } else if (state.step === 'END') {
-                var lower = text.toLowerCase();
-                if (lower.includes('report') || lower.includes('generate') || lower.includes('finish') || lower.includes('done')) {
-                    addUserBubble('Generate Report');
-                    openSignature();
-                } else if (lower.includes('add') || lower.includes('new') || lower.includes('another') || lower.includes('tool')) {
-                    addUserBubble('Add Another Tool');
-                    askToolSelection();
-                }
-            }
-        }
-
-        micBtn.addEventListener('click', startListening);
-        sendBtn.addEventListener('click', function() {
-            if (textInput.value.trim()) handleManualInput(textInput.value.trim());
-        });
-        textInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && textInput.value.trim()) handleManualInput(textInput.value.trim());
-        });
-
-        function handleManualInput(text) {
-            if (state.step === 'ASK_NAME' || state.step === 'ASK_EMPLOYER' || state.step === 'ASK_AREA') {
-                state.pendingValue = text;
-                updateVoiceResultDisplay(text);
-            } else if (state.step === 'END') {
-                var lower = text.toLowerCase();
-                if (lower.includes('report') || lower.includes('generate') || lower.includes('finish') || lower.includes('done')) {
-                    addUserBubble('Generate Report');
-                    openSignature();
-                } else if (lower.includes('add') || lower.includes('new') || lower.includes('another') || lower.includes('tool')) {
-                    addUserBubble('Add Another Tool');
-                    askToolSelection();
-                }
-            }
-        }
-
         function handleToolSelected(tool) {
             state.currentToolSelection = tool;
             addAppBubble('Found: ' + tool.brand + ' ' + tool.model + ' (' + tool.vibration + ' m/s\u00B2). ' + (tool.note ? tool.note + '. ' : '') + 'Please take a photo to check its condition.');
@@ -843,12 +664,10 @@
                 category: tool.category, brand: tool.brand, model: tool.model,
                 vibration: tool.vibration, note: tool.note, photo: photo, requestedHours: hours
             });
-            addAppBubble('Tool logged. Add another tool, or generate the PDF report?');
+            addAppBubble('Tool logged. Type "add another tool" or "generate report" below.');
             state.step = 'END';
-            addActionButtons('Add Another Tool', 'Generate Report',
-                function() { askToolSelection(); },
-                function() { openSignature(); }
-            );
+            textInput.value = '';
+            textInput.focus();
         }
 
         var camModal = document.getElementById('camera-modal');
@@ -1090,10 +909,6 @@
         };
         document.getElementById('btn-reset').onclick = function() {
             if (confirm('Reset all setup data?')) { localStorage.removeItem('havs_setup'); location.reload(); }
-        };
-
-        document.getElementById('test-voice-btn').onclick = function() {
-            speak('Hello! This is a test of the voice system. If you can hear this, the voice is working correctly.');
         };
 
         document.getElementById('setup-save').onclick = function() {
