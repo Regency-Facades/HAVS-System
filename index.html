@@ -303,7 +303,7 @@
     <script>
         let TOOL_DB = [];
         let searchCounter = 0;
-        let timeCounter = 0; // NEW: Counter for unique time inputs
+        let timeCounter = 0;
         let state = {
             setup: { company: '', project: '', number: '', name: '', role: '', logo: null },
             currentOperative: { name: '', employer: '', area: '', tools: [] },
@@ -545,7 +545,6 @@
                         btn.className = 'search-result-btn';
                         btn.innerHTML = '<strong>' + tool.brand + ' ' + tool.model + '</strong><br><span style="font-size:0.8rem; color:#666;">' + tool.vibration + ' m/s&sup2; - ' + tool.category + '</span>';
                         btn.onclick = function() { 
-                            // FIX 1: Clear the results div immediately after clicking
                             resultsDiv.innerHTML = ''; 
                             handleToolSelected(tool); 
                         };
@@ -589,7 +588,6 @@
             window.open('https://www.google.com/search?q=' + encodeURIComponent(query), '_blank');
         }
 
-        // FIX 2 & 3: Unique IDs for Time Inputs
         function showTimeInputUI() {
             timeCounter++;
             var uniqueTimeId = timeCounter;
@@ -603,7 +601,6 @@
             html += '<button id="time-confirm-btn-' + uniqueTimeId + '">Confirm</button>';
             html += '</div>';
             html += '<div class="time-presets">';
-            // Pass the unique ID to the preset function so it knows which box to fill
             html += '<button onclick="setPresetTime(0.5, ' + uniqueTimeId + ')">30 min</button>';
             html += '<button onclick="setPresetTime(1, ' + uniqueTimeId + ')">1 hour</button>';
             html += '<button onclick="setPresetTime(1.5, ' + uniqueTimeId + ')">1.5 hrs</button>';
@@ -613,7 +610,6 @@
             html += '</div></div>';
             addHTMLBubble(html);
 
-            // Attach listener to the SPECIFIC unique button
             document.getElementById('time-confirm-btn-' + uniqueTimeId).onclick = function() {
                 var val = parseFloat(document.getElementById('time-value-' + uniqueTimeId).value);
                 var unit = document.getElementById('time-unit-' + uniqueTimeId).value;
@@ -623,7 +619,6 @@
             };
         }
 
-        // Updated to target specific unique IDs
         function setPresetTime(hours, uniqueId) {
             var input = document.getElementById('time-value-' + uniqueId);
             var unitSelect = document.getElementById('time-unit-' + uniqueId);
@@ -670,7 +665,7 @@
                 addAppBubble('✅ Time is within safe limits.');
                 addActionButtons('Confirm & Log', 'Change Time', 
                     function() { finalizeLog(tool, photo, hours); }, 
-                    function() { showTimeInputUI(); } // This now creates a fresh UI with new IDs
+                    function() { showTimeInputUI(); }
                 );
             } else {
                 var msg = '⚠️ WARNING: ' + hours + ' hrs exceeds the ' + limitName + ' (' + limitString + ').';
@@ -682,7 +677,7 @@
                         addLimitCard(tool, limitHours); 
                         finalizeLog(tool, photo, limitHours); 
                     }, 
-                    function() { showTimeInputUI(); } // This now creates a fresh UI with new IDs
+                    function() { showTimeInputUI(); }
                 );
             }
         }
@@ -823,7 +818,13 @@
                 doc.text(t.vibration.toString(), margin + 105, y + 4);
                 doc.text(eavH + 'h ' + eavM + 'm', margin + 125, y + 4);
                 doc.text(elvH + 'h ' + elvM + 'm', margin + 145, y + 4);
-                doc.text(t.requestedHours + ' hrs', margin + 165, y + 4);
+                
+                // FIX: Format requested time cleanly
+                var totalMins = Math.round(t.requestedHours * 60);
+                var reqH = Math.floor(totalMins / 60);
+                var reqM = totalMins % 60;
+                doc.text(reqH + 'h ' + reqM + 'm', margin + 165, y + 4);
+                
                 y += 7;
             });
             y += 5;
