@@ -22,6 +22,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--wa-bg);
             height: 100vh;
+            height: -webkit-fill-available;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -65,6 +66,7 @@
         #input-area {
             background-color: #F0F2F5; padding: 8px;
             display: flex; align-items: center; gap: 8px; z-index: 10;
+            flex-shrink: 0;
         }
         #text-input {
             flex: 1; padding: 10px 15px; border-radius: 20px;
@@ -237,6 +239,38 @@
         .input-row input {
             flex: 1;
             margin: 5px 0 !important;
+        }
+        
+        /* Inline input for voice capture */
+        .inline-input-container {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .inline-input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            font-size: 1rem;
+            outline: none;
+        }
+        .inline-input:focus {
+            border-color: var(--wa-header-light);
+        }
+        .inline-send-btn {
+            background: var(--wa-header-light);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -564,11 +598,24 @@
             var html = '<div class="voice-result" id="voice-result-display">';
             html += '<em>Listening... speak now or type below</em>';
             html += '</div>';
+            html += '<div class="inline-input-container">';
+            html += '<input type="text" class="inline-input" id="inline-text-input">';
+            html += '<button class="inline-send-btn" onclick="submitInlineInput()">&#10148;</button>';
+            html += '</div>';
             html += '<div class="confirm-bar" id="confirm-bar" style="display:none;">';
             html += '<button class="btn-edit" onclick="editPendingValue()">Edit</button>';
             html += '<button class="btn-ok" onclick="confirmFromUI()">Confirm</button>';
             html += '</div>';
             addHTMLBubble(html);
+        }
+
+        function submitInlineInput() {
+            var inlineInput = document.getElementById('inline-text-input');
+            if (inlineInput && inlineInput.value.trim()) {
+                var text = inlineInput.value.trim();
+                state.pendingValue = text;
+                updateVoiceResultDisplay(text);
+            }
         }
 
         function updateVoiceResultDisplay(text) {
@@ -580,16 +627,20 @@
         }
 
         function editPendingValue() {
-            var current = textInput.value || state.pendingValue || '';
-            textInput.value = current;
-            textInput.focus();
+            var current = state.pendingValue || '';
+            var inlineInput = document.getElementById('inline-text-input');
+            if (inlineInput) {
+                inlineInput.value = current;
+                inlineInput.focus();
+            }
             var el = document.getElementById('voice-result-display');
             if (el) el.innerHTML = '<em>Edit the text above and tap the send arrow</em>';
             document.getElementById('confirm-bar').style.display = 'none';
         }
 
         function confirmFromUI() {
-            var val = textInput.value.trim() || state.pendingValue;
+            var inlineInput = document.getElementById('inline-text-input');
+            var val = (inlineInput && inlineInput.value.trim()) || state.pendingValue;
             if (val) confirmPendingValue(val);
         }
 
@@ -861,7 +912,6 @@
             var pageHeight = doc.internal.pageSize.getHeight();
             var margin = 15;
 
-            // --- HEADER WITH SMART LOGO SCALING ---
             doc.setFillColor(7, 94, 84);
             doc.rect(0, 0, pageWidth, 35, 'F');
             
@@ -869,26 +919,23 @@
             if (state.setup.logo) {
                 try {
                     var logoFmt = (state.setup.logo.indexOf('data:image/png') === 0) ? 'PNG' : 'JPEG';
-                    // Get image properties to calculate aspect ratio
                     var imgProps = doc.getImageProperties(state.setup.logo);
-                    var maxLogoHeight = 22; // Max height in mm
-                    var maxLogoWidth = 50;  // Max width in mm
+                    var maxLogoHeight = 22;
+                    var maxLogoWidth = 50;
                     
                     var ratio = imgProps.width / imgProps.height;
                     var finalH = maxLogoHeight;
                     var finalW = finalH * ratio;
                     
-                    // If it's too wide, scale by width instead
                     if (finalW > maxLogoWidth) {
                         finalW = maxLogoWidth;
                         finalH = finalW / ratio;
                     }
                     
-                    // Center vertically within the 35mm header
                     var yPos = (35 - finalH) / 2;
                     
                     doc.addImage(state.setup.logo, logoFmt, margin, yPos, finalW, finalH);
-                    logoOffset = finalW + 10; // Push text to the right of the logo
+                    logoOffset = finalW + 10;
                 } catch (e) {
                     console.error("Logo error", e);
                 }
@@ -928,7 +975,6 @@
             doc.text(new Date().toLocaleDateString('en-GB'), margin + 135, y);
             y += 12;
 
-            // --- SAFE USAGE LIMITS TABLE (FIXED SPACING) ---
             doc.setFontSize(14); doc.setFont('helvetica', 'bold');
             doc.text('Safe Usage Limits', margin, y); y += 8;
             var tableWidth = pageWidth - 2 * margin;
@@ -937,13 +983,12 @@
             doc.setDrawColor(150, 150, 150); doc.rect(margin, y - 5, tableWidth, 8);
             doc.setFontSize(7); doc.setFont('helvetica', 'bold');
             
-            // New X positions to prevent overlap
-            doc.text('Status', margin + 2, y);          // 17mm
-            doc.text('Tool Name & Type', margin + 35, y); // 50mm (Moved right!)
-            doc.text('Vib (m/s2)', margin + 105, y);      // 120mm
-            doc.text('Time to EAV', margin + 125, y);     // 140mm
-            doc.text('Time to ELV', margin + 145, y);     // 160mm
-            doc.text('Requested', margin + 165, y);       // 180mm
+            doc.text('Status', margin + 2, y);
+            doc.text('Tool Name & Type', margin + 35, y);
+            doc.text('Vib (m/s2)', margin + 105, y);
+            doc.text('Time to EAV', margin + 125, y);
+            doc.text('Time to ELV', margin + 145, y);
+            doc.text('Requested', margin + 165, y);
             y += 5;
 
             state.currentOperative.tools.forEach(function(t) {
@@ -963,8 +1008,7 @@
                 doc.text(status, margin + 2, y + 4);
                 doc.setTextColor(0, 0, 0);
                 
-                // Tool Name starts further right now
-                doc.text(t.brand + ' ' + t.model, margin + 35, y + 4); 
+                doc.text(t.brand + ' ' + t.model, margin + 35, y + 4);
                 doc.text(t.vibration.toString(), margin + 105, y + 4);
                 doc.text(eavH + 'h ' + eavM + 'm', margin + 125, y + 4);
                 doc.text(elvH + 'h ' + elvM + 'm', margin + 145, y + 4);
