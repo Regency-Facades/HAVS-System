@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HAVS Daily Briefing</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <style>
+        :root {
+            --wa-header: #075E54;
+            --wa-header-light: #128C7E;
+            --wa-bg: #E5DDD5;
+            --wa-bubble-app: #FFFFFF;
+            --wa-bubble-user: #DCF8C6;
+            --wa-text-grey: #667781;
+            --wa-green-btn: #25D366;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--wa-bg);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--wa-header);
+            color: white;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            z-index: 10;
+            min-height: 60px;
+        }
+        .header-info { display: flex; flex-direction: column; }
+        .header-title { font-weight: bold; font-size: 1.1rem; }
+        .header-subtitle { font-size: 0.8rem; opacity: 0.8; }
+        .menu-btn { background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; padding: 5px 10px; }
+
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .bubble {
+            max-width: 85%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            position: relative;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            word-wrap: break-word;
+        }
+        .bubble.app {
+            background-color: var(--wa-bubble-app);
+            align-self: flex-start;
+            border-top-left-radius: 0;
+        }
+        .bubble.user {
+            background-color: var(--wa-bubble-user);
+            align-self: flex-end;
+            border-top-right-radius: 0;
+        }
+        .bubble .time {
+            font-size: 0.65rem;
+            color: var(--wa-text-grey);
+            float: right;
+            margin-left: 10px;
+            margin-top: 5px;
+        }
+
+        .limit-card {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 5px solid #ccc;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .limit-card.safe { border-left-color: #25D366; }
+        .limit-card.warn { border-left-color: #FFC107; }
+        .limit-card.danger { border-left-color: #FF5252; }
+        .limit-title { font-weight: bold; margin-bottom: 5px; font-size: 0.95rem; }
+        .limit-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 3px; }
+
+        #input-area {
+            background-color: #F0F2F5;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+        }
+        #text-input {
+            flex: 1;
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            background: white;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--wa-text-grey);
+            padding: 5px;
+        }
+        .icon-btn.active { color: var(--wa-green-btn); }
+
+        .action-btn {
+            background-color: var(--wa-header-light);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 15px;
+            margin: 5px 5px 0 0;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .modal-content h3 { margin-top: 0; color: var(--wa-header); }
+        .modal input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        .modal button {
+            background: var(--wa-green-btn);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .modal button.danger { background: #FF5252; }
+        .modal button.secondary { background: var(--wa-header-light); }
+
+        #camera-video { width: 100%; max-height: 300px; background: black; border-radius: 8px; }
+
+        .tool-select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+            background: white;
+        }
+
+        .explanation-toggle {
+            font-size: 0.75rem;
+            color: #128C7E;
+            cursor: pointer;
+            text-decoration: underline;
+            display: block;
+            margin-top: 5px;
+        }
+        .explanation-box {
+            background-color: #f0f0f0;
+            border-left: 3px solid #128C7E;
+            padding: 8px;
+            border-radius: 0 5px 5px 0;
+            font-size: 0.8rem;
+            color: #555;
+            text-align: left;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .time-input-row {
+            display: flex;
+            gap: 8px;
+            margin: 10px 0;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .time-input-row input {
+            width: 80px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+            text-align: center;
+        }
+        .time-input-row select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+            background: white;
+        }
+        .time-input-row button {
+            background: var(--wa-header-light);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .time-presets {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 8px;
+        }
+        .time-presets button {
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .time-presets button:hover { background: var(--wa-header-light); color: white; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-info">
+            <span class="header-title" id="header-project">HAVS Briefing</span>
+            <span class="header-subtitle" id="header-manager">Setup Required</span>
+        </div>
+        <button class="menu-btn" id="menu-btn">&#8942;</button>
+    </header>
+
+    <div id="chat-container"></div>
+
+    <div id="input-area">
+        <input type="text" id="text-input">
+        <button class="icon-btn" id="mic-btn">&#127908;</button>
+        <button class="icon-btn" id="send-btn">&#10148;</button>
+    </div>
+
+    <!-- Setup Modal -->
+    <div id="setup-modal" class="modal">
+        <div class="modal-content">
+            <h3>Site & Manager Setup</h3>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:15px;">Enter your project and manager details. These will appear on every PDF report.</p>
+            <input type="text" id="setup-project">
+            <input type="text" id="setup-number">
+            <input type="text" id="setup-name">
+            <input type="text" id="setup-role">
+            <p style="font-size:0.85rem; color:#666; margin:10px 0 5px;">Company Logo (optional):</p>
+            <input type="file" id="setup-logo" accept="image/*">
+            <br>
+            <button id="setup-save">Save & Start</button>
+        </div>
+    </div>
+
+    <!-- Camera Modal -->
+    <div id="camera-modal" class="modal">
+        <div class="modal-content" style="background: #222; color: white;">
+            <h3 style="color:white;">Inspect Tool Condition</h3>
+            <p style="font-size:0.85rem; color:#ccc;">Take a clear photo of the tool to verify its condition.</p>
+            <video id="camera-video" autoplay playsinline></video>
+            <canvas id="camera-canvas" style="display:none;"></canvas>
+            <div style="margin-top: 15px;">
+                <button id="cam-capture" style="background: var(--wa-green-btn);">Capture</button>
+                <button id="cam-cancel" class="danger">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signature Modal -->
+    <div id="sig-modal" class="modal">
+        <div class="modal-content">
+            <h3>Manager Signature</h3>
+            <p style="font-size:0.85rem; color:#666;">Sign below to finalize the HAVS Daily Briefing report.</p>
+            <div style="border: 2px solid #ccc; border-radius: 5px; margin: 10px 0; background: #f9f9f9;">
+                <canvas id="sig-canvas" width="350" height="200" style="width: 100%; height: 200px; touch-action: none;"></canvas>
+            </div>
+            <button id="sig-clear" class="danger">Clear</button>
+            <button id="sig-save">Confirm & Generate PDF</button>
+        </div>
+    </div>
+
+    <!-- Menu Modal -->
+    <div id="menu-modal" class="modal" style="background: rgba(0,0,0,0.5); align-items: flex-start; justify-content: flex-end; padding: 60px 20px;">
+        <div class="modal-content" style="width: 220px; padding: 10px;">
+            <button id="btn-backup" class="secondary" style="width: 100%; margin: 5px 0;">Backup Data</button>
+            <button id="btn-restore" class="secondary" style="width: 100%; margin: 5px 0;">Restore Data</button>
+            <button id="btn-reset" class="danger" style="width: 100%; margin: 5px 0;">Reset Setup</button>
+            <button id="btn-close-menu" style="width: 100%; margin: 5px 0; background: #999;">Close</button>
+            <input type="file" id="restore-input" accept=".json" style="display:none;">
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIG & STATE ---
+        let TOOL_DB = [];
+        let state = {
+            setup: { project: '', number: '', name: '', role: '', logo: null },
+            currentOperative: { name: '', employer: '', area: '', tools: [] },
+            step: 'IDLE',
+            currentToolSelection: null,
+            currentPhoto: null,
+            stream: null
+        };
+
+        const chatContainer = document.getElementById('chat-container');
+        const textInput = document.getElementById('text-input');
+        const micBtn = document.getElementById('mic-btn');
+        const sendBtn = document.getElementById('send-btn');
+
+        // --- INITIALIZATION ---
+        window.onload = async function() {
+            await loadToolDB();
+            loadSetup();
+            if (state.setup.project) {
+                updateHeader();
+                addAppBubble('Good morning, ' + state.setup.name + '. Who are we briefing today? Please state the operative name, employer, and work area.');
+                state.step = 'OPERATIVE';
+                startListening();
+            } else {
+                document.getElementById('setup-modal').style.display = 'flex';
+            }
+        };
+
+        async function loadToolDB() {
+            try {
+                const response = await fetch('data.json');
+                const data = await response.json();
+                data.categories.forEach(function(cat) {
+                    cat.tools.forEach(function(tool) {
+                        TOOL_DB.push({
+                            category: cat.category,
+                            brand: tool.brand,
+                            model: tool.model,
+                            vibration: tool.vibration,
+                            note: tool.note || ''
+                        });
+                    });
+                });
+            } catch (e) {
+                console.error('Failed to load data.json', e);
+            }
+        }
+
+        function loadSetup() {
+            try {
+                const saved = localStorage.getItem('havs_setup');
+                if (saved) state.setup = JSON.parse(saved);
+            } catch (e) {}
+        }
+
+        function saveSetup() {
+            try {
+                localStorage.setItem('havs_setup', JSON.stringify(state.setup));
+            } catch (e) {}
+            updateHeader();
+        }
+
+        function updateHeader() {
+            document.getElementById('header-project').innerText = state.setup.project || 'HAVS Briefing';
+            document.getElementById('header-manager').innerText = state.setup.name ? state.setup.name + ' (' + state.setup.role + ')' : 'Setup Required';
+        }
+
+        // --- UI HELPERS ---
+        function getTime() {
+            var now = new Date();
+            var h = now.getHours().toString().padStart(2, '0');
+            var m = now.getMinutes().toString().padStart(2, '0');
+            return h + ':' + m;
+        }
+
+        function addAppBubble(text) {
+            var div = document.createElement('div');
+            div.className = 'bubble app';
+            var textNode = document.createTextNode(text);
+            div.appendChild(textNode);
+            var timeSpan = document.createElement('span');
+            timeSpan.className = 'time';
+            timeSpan.innerText = getTime();
+            div.appendChild(timeSpan);
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            speak(text);
+        }
+
+        function addUserBubble(text) {
+            var div = document.createElement('div');
+            div.className = 'bubble user';
+            var textNode = document.createTextNode(text);
+            div.appendChild(textNode);
+            var timeSpan = document.createElement('span');
+            timeSpan.className = 'time';
+            timeSpan.innerText = getTime();
+            div.appendChild(timeSpan);
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function addHTMLBubble(html) {
+            var div = document.createElement('div');
+            div.className = 'bubble app';
+            div.innerHTML = html + '<span class="time">' + getTime() + '</span>';
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function addLimitCard(tool, timeHours) {
+            var maxHours = 100 / (Math.pow(tool.vibration, 2) * 2);
+            var maxMins = Math.floor(maxHours * 60);
+            var maxHoursDisplay = Math.floor(maxHours);
+            var maxMinsRemainder = Math.floor((maxHours - maxHoursDisplay) * 60);
+
+            var statusClass = 'safe';
+            var statusText = 'SAFE';
+            if (timeHours > maxHours) {
+                statusClass = 'danger';
+                statusText = 'OVER LIMIT';
+            } else if (timeHours > maxHours * 0.8) {
+                statusClass = 'warn';
+                statusText = 'CAUTION';
+            }
+
+            var html = '<div class="limit-card ' + statusClass + '">';
+            html += '<div class="limit-title">' + tool.brand + ' ' + tool.model + ' <span style="float:right; font-size:0.8rem;">' + statusText + '</span></div>';
+            html += '<div class="limit-row"><span>Vibration:</span><span>' + tool.vibration + ' m/s&sup2;</span></div>';
+            html += '<div class="limit-row"><span>Requested Time:</span><span>' + timeHours + ' hrs</span></div>';
+            html += '<div class="limit-row" style="font-weight:bold; color:' + (statusClass === 'danger' ? 'red' : 'green') + '"><span>Max Safe Time Today:</span><span>' + maxHoursDisplay + 'h ' + maxMinsRemainder + 'm</span></div>';
+            html += '</div>';
+
+            addHTMLBubble(html);
+        }
+
+        function addActionButtons(btn1Text, btn2Text, action1, action2) {
+            var div = document.createElement('div');
+            div.className = 'bubble app';
+            div.style.background = 'transparent';
+            div.style.boxShadow = 'none';
+            div.style.padding = '0';
+
+            var b1 = document.createElement('button');
+            b1.className = 'action-btn';
+            b1.innerText = btn1Text;
+            b1.onclick = function() {
+                addUserBubble(btn1Text);
+                action1();
+            };
+
+            var b2 = document.createElement('button');
+            b2.className = 'action-btn';
+            b2.innerText = btn2Text;
+            b2.onclick = function() {
+                addUserBubble(btn2Text);
+                action2();
+            };
+
+            div.appendChild(b1);
+            div.appendChild(b2);
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showToolDropdown(filterBrand) {
+            var html = '<select class="tool-select" id="tool-dropdown"><option value="">-- Select a tool --</option>';
+            
+            var toolsToShow = TOOL_DB;
+            if (filterBrand) {
+                toolsToShow = TOOL_DB.filter(function(t) { return t.brand.toLowerCase() === filterBrand.toLowerCase(); });
+            }
+
+            toolsToShow.forEach(function(t, i) {
+                // Find original index to pass back
+                var originalIndex = TOOL_DB.indexOf(t);
+                html += '<option value="' + originalIndex + '">' + t.brand + ' ' + t.model + ' (' + t.vibration + ' m/s&sup2;)</option>';
+            });
+            html += '</select>';
+            html += '<span class="explanation-toggle" onclick="toggleExplanation(this)">Show explanation</span>';
+            html += '<div class="explanation-box">Select the exact tool model from the list. The vibration value is pre-loaded from manufacturer data.</div>';
+            addHTMLBubble(html);
+
+            document.getElementById('tool-dropdown').onchange = function(e) {
+                if (e.target.value !== '') {
+                    var tool = TOOL_DB[parseInt(e.target.value)];
+                    handleToolSelected(tool);
+                }
+            };
+        }
+
+        function toggleExplanation(el) {
+            var box = el.nextElementSibling;
+            if (box.style.display === 'block') {
+                box.style.display = 'none';
+                el.innerText = 'Show explanation';
+            } else {
+                box.style.display = 'block';
+                el.innerText = 'Hide explanation';
+            }
+        }
+
+        // --- TIME INPUT UI ---
+        function showTimeInputUI() {
+            var tool = state.currentToolSelection;
+            var html = '<div style="text-align:center;">';
+            html += '<p style="margin:5px 0; font-size:0.9rem;">How long will the operative use the <strong>' + tool.brand + ' ' + tool.model + '</strong> today?</p>';
+            html += '<div class="time-input-row">';
+            html += '<input type="number" id="time-value" min="0" max="24" step="0.25">';
+            html += '<select id="time-unit"><option value="hours">Hours</option><option value="minutes">Minutes</option></select>';
+            html += '<button id="time-confirm-btn">Confirm Time</button>';
+            html += '</div>';
+            html += '<div class="time-presets">';
+            html += '<button onclick="setPresetTime(0.5)">30 min</button>';
+            html += '<button onclick="setPresetTime(1)">1 hour</button>';
+            html += '<button onclick="setPresetTime(1.5)">1.5 hrs</button>';
+            html += '<button onclick="setPresetTime(2)">2 hours</button>';
+            html += '<button onclick="setPresetTime(4)">4 hours</button>';
+            html += '<button onclick="setPresetTime(8)">Full shift</button>';
+            html += '</div>';
+            html += '<span class="explanation-toggle" onclick="toggleExplanation(this)">Show explanation</span>';
+            html += '<div class="explanation-box">Enter the total time the operative will use this tool today. The app will calculate if it is within safe HAVS limits.</div>';
+            html += '</div>';
+
+            addHTMLBubble(html);
+
+            document.getElementById('time-confirm-btn').onclick = function() {
+                var val = parseFloat(document.getElementById('time-value').value);
+                var unit = document.getElementById('time-unit').value;
+                if (isNaN(val) || val <= 0) {
+                    alert('Please enter a valid time.');
+                    return;
+                }
+                var hours = unit === 'minutes' ? val / 60 : val;
+                handleTimeConfirmed(hours);
+            };
+        }
+
+        function setPresetTime(hours) {
+            var input = document.getElementById('time-value');
+            var unitSelect = document.getElementById('time-unit');
+            if (hours < 1) {
+                input.value = hours * 60;
+                unitSelect.value = 'minutes';
+            } else {
+                input.value = hours;
+                unitSelect.value = 'hours';
+            }
+            document.getElementById('time-confirm-btn').click();
+        }
+
+        // --- VOICE ENGINE ---
+        var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        var recognition = null;
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-GB';
+        }
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                var u = new SpeechSynthesisUtterance(text);
+                u.rate = 0.95;
+                u.pitch = 1.0;
+                window.speechSynthesis.speak(u);
+            }
+        }
+
+        function startListening() {
+            if (!recognition) {
+                textInput.focus();
+                return;
+            }
+            micBtn.classList.add('active');
+            try {
+                recognition.start();
+            } catch (e) {
+                recognition.stop();
+                setTimeout(function() { recognition.start(); }, 200);
+            }
+            recognition.onresult = function(e) {
+                var text = e.results[0][0].transcript;
+                textInput.value = text;
+                micBtn.classList.remove('active');
+                handleInput(text);
+            };
+            recognition.onerror = function() {
+                micBtn.classList.remove('active');
+            };
+            recognition.onend = function() {
+                micBtn.classList.remove('active');
+            };
+        }
+
+        micBtn.addEventListener('click', startListening);
+        sendBtn.addEventListener('click', function() {
+            if (textInput.value.trim()) handleInput(textInput.value.trim());
+        });
+        textInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && textInput.value.trim()) handleInput(textInput.value.trim());
+        });
+
+        // --- FLOW LOGIC ---
+        function handleInput(text) {
+            addUserBubble(text);
+            textInput.value = '';
+
+            if (state.step === 'OPERATIVE') {
+                var parts = text.split(',').map(function(s) { return s.trim(); });
+                state.currentOperative.name = parts[0] || text;
+                state.currentOperative.employer = parts[1] || '';
+                state.currentOperative.area = parts[2] || '';
+
+                addAppBubble('Logged: ' + state.currentOperative.name + (state.currentOperative.employer ? ' from ' + state.currentOperative.employer : '') + (state.currentOperative.area ? ' in ' + state.currentOperative.area : '') + '. Which tool are we inspecting first? Please state the Make and Model Number (e.g. Makita 2470).');
+                state.step = 'TOOL_SELECT';
+                startListening();
+
+            } else if (state.step === 'TOOL_SELECT') {
+                var result = findToolByText(text);
+
+                if (result.match) {
+                    handleToolSelected(result.match);
+                } else if (result.brandFound) {
+                    // Found the brand, but not the specific number. Show filtered dropdown.
+                    addAppBubble('I found tools for ' + result.brandFound + ', but I need the specific model number. Please select from the list below.');
+                    showToolDropdown(result.brandFound);
+                } else {
+                    addAppBubble('I did not catch that Make or Number. Please select from the full list below.');
+                    showToolDropdown(null);
+                }
+
+            } else if (state.step === 'TOOL_TIME') {
+                var hours = parseTimeInput(text);
+                if (hours !== null && hours > 0) {
+                    handleTimeConfirmed(hours);
+                } else {
+                    addAppBubble('I could not understand that time. Please type a number (e.g. "2" for 2 hours, "30" for 30 minutes) or use the buttons above.');
+                }
+
+            } else if (state.step === 'END') {
+                var lower = text.toLowerCase();
+                if (lower.includes('report') || lower.includes('generate') || lower.includes('finish') || lower.includes('done')) {
+                    addUserBubble('Generate Report');
+                    openSignature();
+                } else if (lower.includes('add') || lower.includes('new') || lower.includes('another') || lower.includes('tool')) {
+                    addUserBubble('Add New Tool');
+                    addAppBubble('Which tool are we inspecting next? Please state the Make and Model Number.');
+                    state.step = 'TOOL_SELECT';
+                    startListening();
+                } else {
+                    addAppBubble('Please say "add another tool" or "generate report".');
+                }
+            }
+        }
+
+        // --- SMART MATCHING BY MAKE AND NUMBER ---
+        function findToolByText(text) {
+            var lowerText = text.toLowerCase();
+            var words = lowerText.replace(/[^a-z0-9\s]/g, '').split(/\s+/);
+            
+            // Extract numbers from voice input (e.g. "2470", "2", "26")
+            var inputNumbers = lowerText.match(/\d+/g) || [];
+            
+            // Find mentioned brands
+            var mentionedBrands = [];
+            TOOL_DB.forEach(function(t) {
+                if (lowerText.includes(t.brand.toLowerCase())) {
+                    if (mentionedBrands.indexOf(t.brand) === -1) mentionedBrands.push(t.brand);
+                }
+            });
+
+            var bestMatch = null;
+            var bestScore = 0;
+            var foundBrand = mentionedBrands.length > 0 ? mentionedBrands[0] : null;
+
+            TOOL_DB.forEach(function(t) {
+                var score = 0;
+                var tBrand = t.brand.toLowerCase();
+                var tModel = t.model.toLowerCase();
+                var modelNumbers = tModel.match(/\d+/g) || [];
+
+                // 1. Check if Brand matches
+                var brandMatch = mentionedBrands.some(function(b) { return tBrand.includes(b.toLowerCase()); });
+                if (brandMatch) score += 10;
+
+                // 2. Check if Numbers match (The "Number" part of Make & Number)
+                var numberMatchCount = 0;
+                inputNumbers.forEach(function(inNum) {
+                    modelNumbers.forEach(function(mNum) {
+                        if (inNum === mNum || inNum === mNum.replace(/-/g, '')) {
+                            numberMatchCount++;
+                        }
+                    });
+                });
+                score += (numberMatchCount * 20); // High weight for numbers
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMatch = t;
+                }
+            });
+
+            // If we have a brand and at least one number match, it's a solid hit
+            if (foundBrand && bestScore >= 30) {
+                return { match: bestMatch, brandFound: null };
+            }
+            
+            // If we only found the brand, return the brand so we can show a filtered list
+            if (foundBrand) {
+                return { match: null, brandFound: foundBrand };
+            }
+
+            return { match: null, brandFound: null };
+        }
+
+        function parseTimeInput(text) {
+            var lower = text.toLowerCase();
+            var num = parseFloat(lower.replace(/[^0-9.]/g, ''));
+
+            if (lower.includes('minute') || lower.includes('min') || lower.includes('mins')) {
+                return num / 60;
+            }
+            if (lower.includes('hour') || lower.includes('hr') || lower.includes('hrs')) {
+                return num;
+            }
+            if (lower.includes('half') && lower.includes('hour')) {
+                return 0.5;
+            }
+            if (lower.includes('quarter') && lower.includes('hour')) {
+                return 0.25;
+            }
+            if (!isNaN(num) && num > 0) {
+                if (num > 12) return num / 60;
+                return num;
+            }
+            return null;
+        }
+
+        function handleToolSelected(tool) {
+            state.currentToolSelection = tool;
+            addAppBubble('Found: ' + tool.brand + ' ' + tool.model + ' (' + tool.vibration + ' m/s\u00B2). ' + (tool.note ? tool.note + '. ' : '') + 'Please take a photo to check its condition.');
+            state.step = 'TOOL_PHOTO';
+            openCamera();
+        }
+
+        function handleTimeConfirmed(hours) {
+            var tool = state.currentToolSelection;
+            var photo = state.currentPhoto;
+
+            addLimitCard(tool, hours);
+            state.currentOperative.tools.push({
+                category: tool.category,
+                brand: tool.brand,
+                model: tool.model,
+                vibration: tool.vibration,
+                note: tool.note,
+                photo: photo,
+                requestedHours: hours
+            });
+
+            addAppBubble('Tool logged. Would you like to add another tool, or generate the PDF report?');
+            state.step = 'END';
+
+            addActionButtons('Add Another Tool', 'Generate Report',
+                function() {
+                    addAppBubble('Which tool are we inspecting next? Please state the Make and Model Number.');
+                    state.step = 'TOOL_SELECT';
+                    startListening();
+                },
+                function() {
+                    openSignature();
+                }
+            );
+            startListening();
+        }
+
+        // --- CAMERA ---
+        var camModal = document.getElementById('camera-modal');
+        var video = document.getElementById('camera-video');
+        var canvas = document.getElementById('camera-canvas');
+
+        function openCamera() {
+            camModal.style.display = 'flex';
+            try {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function(stream) {
+                    state.stream = stream;
+                    video.srcObject = stream;
+                }).catch(function(e) {
+                    alert('Camera access denied or unavailable. The tool will be logged without a photo.');
+                    camModal.style.display = 'none';
+                    state.currentPhoto = null;
+                    askForTime();
+                });
+            } catch (e) {
+                camModal.style.display = 'none';
+                state.currentPhoto = null;
+                askForTime();
+            }
+        }
+
+        document.getElementById('cam-capture').onclick = function() {
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            var dataUrl = canvas.toDataURL('image/jpeg');
+            stopCamera();
+            state.currentPhoto = dataUrl;
+            askForTime();
+        };
+
+        document.getElementById('cam-cancel').onclick = function() {
+            stopCamera();
+            state.currentPhoto = null;
+            askForTime();
+        };
+
+        function stopCamera() {
+            if (state.stream) {
+                state.stream.getTracks().forEach(function(t) { t.stop(); });
+                state.stream = null;
+            }
+            camModal.style.display = 'none';
+        }
+
+        function askForTime() {
+            state.step = 'TOOL_TIME';
+            addAppBubble('How many hours will the operative use this tool today? You can type a number or use the buttons below.');
+            showTimeInputUI();
+            startListening();
+        }
+
+        // --- SIGNATURE & PDF ---
+        var sigModal = document.getElementById('sig-modal');
+        var sigCanvas = document.getElementById('sig-canvas');
+        var sigPad = null;
+
+        function openSignature() {
+            sigModal.style.display = 'flex';
+            if (!sigPad) {
+                sigPad = new SignaturePad(sigCanvas, { backgroundColor: 'rgb(249,249,249)' });
+            } else {
+                sigPad.clear();
+            }
+        }
+
+        document.getElementById('sig-clear').onclick = function() {
+            sigPad.clear();
+        };
+
+        document.getElementById('sig-save').onclick = function() {
+            if (sigPad.isEmpty()) {
+                alert('Please provide a signature before generating the report.');
+                return;
+            }
+            var sigData = sigPad.toDataURL();
+            sigModal.style.display = 'none';
+            generatePDF(sigData);
+        };
+
+        function generatePDF(sigData) {
+            var jsPDF = window.jspdf.jsPDF;
+            var doc = new jsPDF('p', 'mm', 'a4');
+            var pageWidth = doc.internal.pageSize.getWidth();
+            var pageHeight = doc.internal.pageSize.getHeight();
+            var margin = 15;
+
+            // Header band
+            doc.setFillColor(7, 94, 84);
+            doc.rect(0, 0, pageWidth, 30, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text('HAVS DAILY BRIEFING', margin, 12);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text('PROJECT: ' + (state.setup.project || 'N/A') + ' | No: ' + (state.setup.number || 'N/A'), margin, 20);
+            doc.text(state.setup.name + ' (' + state.setup.role + ')', pageWidth - margin, 12, { align: 'right' });
+            doc.text(new Date().toLocaleDateString('en-GB'), pageWidth - margin, 20, { align: 'right' });
+
+            var y = 40;
+            doc.setTextColor(0, 0, 0);
+
+            // Operative Details
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Operative Details', margin, y);
+            y += 8;
+            doc.setDrawColor(200, 200, 200);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 8;
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Operative Name:', margin, y);
+            doc.setFont('helvetica', 'bold');
+            doc.text(state.currentOperative.name || 'N/A', margin + 40, y);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Employer:', margin + 110, y);
+            doc.setFont('helvetica', 'bold');
+            doc.text(state.currentOperative.employer || 'N/A', margin + 135, y);
+            y += 7;
+            doc.setFont('helvetica', 'normal');
+            doc.text('Work Area:', margin, y);
+            doc.setFont('helvetica', 'bold');
+            doc.text(state.currentOperative.area || 'N/A', margin + 40, y);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Date:', margin + 110, y);
+            doc.setFont('helvetica', 'bold');
+            doc.text(new Date().toLocaleDateString('en-GB'), margin + 135, y);
+            y += 12;
+
+            // Safe Usage Limits Table
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Safe Usage Limits', margin, y);
+            y += 8;
+
+            var tableWidth = pageWidth - 2 * margin;
+
+            doc.setFillColor(240, 240, 240);
+            doc.rect(margin, y - 5, tableWidth, 8, 'F');
+            doc.setDrawColor(150, 150, 150);
+            doc.rect(margin, y - 5, tableWidth, 8);
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Status', margin + 2, y);
+            doc.text('Tool Name & Type', margin + 12, y);
+            doc.text('Vib (m/s2)', margin + 77, y);
+            doc.text('Max Safe Time', margin + 102, y);
+            doc.text('Requested', margin + 137, y);
+            y += 5;
+
+            state.currentOperative.tools.forEach(function(t) {
+                var maxHours = 100 / (Math.pow(t.vibration, 2) * 2);
+                var maxMins = Math.floor(maxHours * 60);
+                var maxH = Math.floor(maxHours);
+                var maxM = Math.floor((maxHours - maxH) * 60);
+                var status = t.requestedHours > maxHours ? 'OVER' : 'SAFE';
+
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(status === 'OVER' ? 220 : 34, status === 'OVER' ? 38 : 197, status === 'OVER' ? 38 : 94);
+                doc.text(status, margin + 2, y + 4);
+                doc.setTextColor(0, 0, 0);
+                doc.text(t.brand + ' ' + t.model, margin + 12, y + 4);
+                doc.text(t.vibration.toString(), margin + 77, y + 4);
+                doc.text(maxH + 'h ' + maxM + 'm', margin + 102, y + 4);
+                doc.text(t.requestedHours + ' hrs', margin + 137, y + 4);
+                y += 7;
+            });
+            y += 5;
+
+            // Tool Evidence Table
+            if (y > pageHeight - 60) { doc.addPage(); y = 20; }
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text('Tool Evidence', margin, y);
+            y += 8;
+
+            state.currentOperative.tools.forEach(function(t) {
+                if (y > pageHeight - 40) { doc.addPage(); y = 20; }
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'bold');
+                doc.text(t.brand + ' ' + t.model, margin, y + 4);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.text(t.category, margin, y + 9);
+
+                if (t.photo) {
+                    try {
+                        doc.addImage(t.photo, 'JPEG', margin + 72, y - 2, 35, 35);
+                    } catch (e) {
+                        doc.text('[Photo error]', margin + 72, y + 15);
+                    }
+                } else {
+                    doc.setFont('helvetica', 'italic');
+                    doc.setTextColor(150, 150, 150);
+                    doc.text('No photo', margin + 72, y + 15);
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFont('helvetica', 'normal');
+                }
+                y += 38;
+            });
+
+            // Signature section
+            if (y > pageHeight - 50) { doc.addPage(); y = 20; }
+            y += 5;
+            doc.setDrawColor(0, 0, 0);
+            doc.line(margin, y, margin + 70, y);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Manager Signature', margin, y + 5);
+            if (sigData) {
+                try {
+                    doc.addImage(sigData, 'PNG', margin, y + 8, 50, 25);
+                } catch (e) {}
+            }
+            y += 38;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.text(state.setup.name + ' - ' + state.setup.role, margin, y);
+            doc.text('Signed: ' + new Date().toLocaleString('en-GB'), margin + 80, y);
+
+            // Footer on all pages
+            var totalPages = doc.internal.getNumberOfPages();
+            for (var i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(7);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(150, 150, 150);
+                doc.text('HAVS Daily Briefing - ' + state.setup.project + ' - Ref: HAVS-' + new Date().toISOString().slice(0, 10), pageWidth / 2, pageHeight - 8, { align: 'center' });
+                doc.text('Page ' + i + ' of ' + totalPages, pageWidth - margin, pageHeight - 8, { align: 'right' });
+            }
+
+            var fileName = 'HAVS_' + state.currentOperative.name.replace(/\s/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.pdf';
+            doc.save(fileName);
+
+            addAppBubble('Report generated and downloaded successfully. Have a safe shift!');
+            state.currentOperative = { name: '', employer: '', area: '', tools: [] };
+        }
+
+        // --- BACKUP / RESTORE ---
+        document.getElementById('menu-btn').onclick = function() {
+            document.getElementById('menu-modal').style.display = 'flex';
+        };
+        document.getElementById('btn-close-menu').onclick = function() {
+            document.getElementById('menu-modal').style.display = 'none';
+        };
+
+        document.getElementById('btn-backup').onclick = function() {
+            var data = {
+                setup: state.setup,
+                timestamp: new Date().toISOString()
+            };
+            var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'HAVS_Backup_' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            document.getElementById('menu-modal').style.display = 'none';
+        };
+
+        document.getElementById('btn-restore').onclick = function() {
+            document.getElementById('restore-input').click();
+        };
+
+        document.getElementById('restore-input').onchange = function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    var data = JSON.parse(ev.target.result);
+                    if (data.setup) {
+                        state.setup = data.setup;
+                        saveSetup();
+                        alert('Data restored successfully!');
+                        location.reload();
+                    } else {
+                        alert('Invalid backup file.');
+                    }
+                } catch (err) {
+                    alert('Error reading file: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+            document.getElementById('menu-modal').style.display = 'none';
+        };
+
+        document.getElementById('btn-reset').onclick = function() {
+            if (confirm('Reset all setup data? This will clear project and manager details.')) {
+                localStorage.removeItem('havs_setup');
+                location.reload();
+            }
+        };
+
+        // Setup Modal Logic
+        document.getElementById('setup-save').onclick = function() {
+            state.setup.project = document.getElementById('setup-project').value.trim();
+            state.setup.number = document.getElementById('setup-number').value.trim();
+            state.setup.name = document.getElementById('setup-name').value.trim();
+            state.setup.role = document.getElementById('setup-role').value.trim();
+
+            if (!state.setup.project || !state.setup.name) {
+                alert('Project Name and Manager Name are required.');
+                return;
+            }
+
+            var logoFile = document.getElementById('setup-logo').files[0];
+            if (logoFile) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    state.setup.logo = e.target.result;
+                    saveSetup();
+                    document.getElementById('setup-modal').style.display = 'none';
+                    addAppBubble('Setup complete. Good morning, ' + state.setup.name + '. Who are we briefing today? Please state the operative name, employer, and work area.');
+                    state.step = 'OPERATIVE';
+                    startListening();
+                };
+                reader.readAsDataURL(logoFile);
+            } else {
+                saveSetup();
+                document.getElementById('setup-modal').style.display = 'none';
+                addAppBubble('Setup complete. Good morning, ' + state.setup.name + '. Who are we briefing today? Please state the operative name, employer, and work area.');
+                state.step = 'OPERATIVE';
+                startListening();
+            }
+        };
+    </script>
+</body>
+</html>
