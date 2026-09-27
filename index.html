@@ -97,7 +97,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        .modal input[type="text"] {
+        .modal input[type="text"], .modal input[type="number"] {
             width: 100%; padding: 12px; margin: 0 0 5px 0;
             border: 1px solid #ccc; border-radius: 5px;
             box-sizing: border-box; font-size: 1rem;
@@ -110,10 +110,7 @@
         .modal button.danger { background: #FF5252; }
         .modal button.secondary { background: var(--wa-header-light); }
         #camera-video { width: 100%; max-height: 300px; background: black; border-radius: 8px; }
-        .tool-select {
-            width: 100%; padding: 12px; margin: 10px 0;
-            border: 1px solid #ccc; border-radius: 5px; font-size: 1rem; background: white;
-        }
+        
         .explanation-toggle {
             font-size: 0.75rem; color: #128C7E; cursor: pointer;
             text-decoration: underline; display: block; margin-top: 5px;
@@ -164,6 +161,84 @@
         }
         .confirm-bar .btn-edit { background: #FF9800; color: white; }
         .confirm-bar .btn-ok { background: var(--wa-green-btn); color: white; }
+        
+        /* Search & Manual Entry Styles */
+        .search-container {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+        }
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        .search-results {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        .search-result-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: white;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .search-result-btn:hover { background: #f0f0f0; }
+        .search-result-btn strong { color: var(--wa-header); }
+        
+        .manual-entry-form {
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+        }
+        .manual-entry-form input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .manual-entry-form button {
+            background: var(--wa-header-light);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            margin-top: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .search-btn {
+            background: #4285F4 !important;
+            display: inline-block;
+            margin-left: 5px;
+            padding: 8px 12px !important;
+            font-size: 0.8rem !important;
+        }
+        .input-row {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        .input-row input {
+            flex: 1;
+            margin: 5px 0 !important;
+        }
     </style>
 </head>
 <body>
@@ -434,8 +509,8 @@
 
         function askToolSelection() {
             state.step = 'ASK_TOOL';
-            addAppBubble('Which tool? Select from the list below.');
-            showToolDropdown();
+            addAppBubble('Which tool? Search the database below or add manually.');
+            showToolSearch();
         }
 
         function startVoiceCapture(field) {
@@ -498,21 +573,98 @@
             if (val) confirmPendingValue(val);
         }
 
-        function showToolDropdown() {
-            var html = '<select class="tool-select" id="tool-dropdown"><option value="">-- Select tool --</option>';
-            TOOL_DB.forEach(function(t, i) {
-                html += '<option value="' + i + '">' + t.brand + ' ' + t.model + ' (' + t.vibration + ' m/s&sup2;)</option>';
-            });
-            html += '</select>';
-            html += '<span class="explanation-toggle" onclick="toggleExplanation(this)">Show explanation</span>';
-            html += '<div class="explanation-box">Tap the correct tool from the list. Voice recognition is not reliable for model numbers.</div>';
+        // --- NEW: INTERNAL SEARCH ENGINE ---
+        function showToolSearch() {
+            var html = '<div class="search-container">';
+            html += '<label class="form-label" style="margin-top:0;">Search Tool Database</label>';
+            html += '<input type="text" id="tool-search-input" class="search-input">';
+            html += '<div id="tool-search-results" class="search-results"></div>';
+            html += '<button id="btn-manual-entry" class="action-btn" style="margin-top:10px; width:100%; background:#FF9800;">Tool not listed? Add Manually</button>';
+            html += '</div>';
             addHTMLBubble(html);
-            document.getElementById('tool-dropdown').onchange = function(e) {
-                if (e.target.value !== '') {
-                    var tool = TOOL_DB[parseInt(e.target.value)];
-                    handleToolSelected(tool);
+
+            document.getElementById('tool-search-input').addEventListener('input', function(e) {
+                var query = e.target.value.toLowerCase().trim();
+                var resultsDiv = document.getElementById('tool-search-results');
+                resultsDiv.innerHTML = '';
+
+                if (query.length < 2) return;
+
+                var matches = TOOL_DB.filter(function(t) {
+                    return (t.brand + ' ' + t.model).toLowerCase().includes(query);
+                });
+
+                if (matches.length === 0) {
+                    resultsDiv.innerHTML = '<p style="color:#666; font-size:0.8rem; text-align:center; padding:10px;">No matches found in database.</p>';
+                } else {
+                    matches.forEach(function(tool) {
+                        var btn = document.createElement('button');
+                        btn.className = 'search-result-btn';
+                        btn.innerHTML = '<strong>' + tool.brand + ' ' + tool.model + '</strong><br><span style="font-size:0.8rem; color:#666;">' + tool.vibration + ' m/s&sup2; - ' + tool.category + '</span>';
+                        btn.onclick = function() { handleToolSelected(tool); };
+                        resultsDiv.appendChild(btn);
+                    });
                 }
+            });
+
+            document.getElementById('btn-manual-entry').onclick = function() {
+                showManualEntryForm();
             };
+        }
+
+        function showManualEntryForm() {
+            var html = '<div class="manual-entry-form">';
+            html += '<p style="margin:0 0 10px 0; font-size:0.9rem; font-weight:bold;">Enter Tool Details Manually</p>';
+            
+            html += '<label class="form-label" style="margin-top:0;">Brand</label>';
+            html += '<input type="text" id="manual-brand">';
+            
+            html += '<label class="form-label">Model</label>';
+            html += '<div class="input-row">';
+            html += '<input type="text" id="manual-model">';
+            html += '<button class="search-btn" id="google-search-btn" onclick="openGoogleSearch()"> Search</button>';
+            html += '</div>';
+            
+            html += '<label class="form-label">Vibration (m/s²)</label>';
+            html += '<input type="number" id="manual-vib" step="0.1">';
+            
+            html += '<button id="manual-submit-btn" style="width:100%; margin-top:10px;">Add Tool</button>';
+            html += '</div>';
+            addHTMLBubble(html);
+            
+            document.getElementById('manual-submit-btn').onclick = function() {
+                var brand = document.getElementById('manual-brand').value.trim();
+                var model = document.getElementById('manual-model').value.trim();
+                var vib = parseFloat(document.getElementById('manual-vib').value);
+                
+                if (!brand || !model || isNaN(vib) || vib <= 0) {
+                    alert('Please fill in Brand, Model, and a valid Vibration value.');
+                    return;
+                }
+                
+                var manualTool = {
+                    category: 'Manual Entry',
+                    brand: brand,
+                    model: model,
+                    vibration: vib,
+                    note: 'Manually entered tool'
+                };
+                handleToolSelected(manualTool);
+            };
+        }
+
+        function openGoogleSearch() {
+            var brand = document.getElementById('manual-brand').value.trim();
+            var model = document.getElementById('manual-model').value.trim();
+            
+            if (!brand && !model) {
+                alert('Please enter at least the Brand or Model first.');
+                return;
+            }
+            
+            var query = brand + ' ' + model + ' vibration value m/s2 HAVS';
+            var url = 'https://www.google.com/search?q=' + encodeURIComponent(query);
+            window.open(url, '_blank');
         }
 
         function showTimeInputUI() {
@@ -698,11 +850,9 @@
             var pageHeight = doc.internal.pageSize.getHeight();
             var margin = 15;
 
-            // Header band with logo
             doc.setFillColor(7, 94, 84);
             doc.rect(0, 0, pageWidth, 35, 'F');
             
-            // Add logo if available
             if (state.setup.logo) {
                 try {
                     var logoFmt = (state.setup.logo.indexOf('data:image/png') === 0) ? 'PNG' : 'JPEG';
