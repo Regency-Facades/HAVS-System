@@ -303,6 +303,7 @@
     <script>
         let TOOL_DB = [];
         let searchCounter = 0;
+        let timeCounter = 0; // NEW: Counter for unique time inputs
         let state = {
             setup: { company: '', project: '', number: '', name: '', role: '', logo: null },
             currentOperative: { name: '', employer: '', area: '', tools: [] },
@@ -515,7 +516,7 @@
             searchCounter++;
             var uniqueId = searchCounter;
             
-            var html = '<div class="search-container">';
+            var html = '<div class="search-container" id="search-container-' + uniqueId + '">';
             html += '<label class="form-label" style="margin-top:0;">Search Tool Database</label>';
             html += '<input type="text" id="tool-search-input-' + uniqueId + '" class="search-input">';
             html += '<div id="tool-search-results-' + uniqueId + '" class="search-results"></div>';
@@ -543,7 +544,11 @@
                         var btn = document.createElement('button');
                         btn.className = 'search-result-btn';
                         btn.innerHTML = '<strong>' + tool.brand + ' ' + tool.model + '</strong><br><span style="font-size:0.8rem; color:#666;">' + tool.vibration + ' m/s&sup2; - ' + tool.category + '</span>';
-                        btn.onclick = function() { handleToolSelected(tool); };
+                        btn.onclick = function() { 
+                            // FIX 1: Clear the results div immediately after clicking
+                            resultsDiv.innerHTML = ''; 
+                            handleToolSelected(tool); 
+                        };
                         resultsDiv.appendChild(btn);
                     });
                 }
@@ -584,39 +589,47 @@
             window.open('https://www.google.com/search?q=' + encodeURIComponent(query), '_blank');
         }
 
+        // FIX 2 & 3: Unique IDs for Time Inputs
         function showTimeInputUI() {
+            timeCounter++;
+            var uniqueTimeId = timeCounter;
             var tool = state.currentToolSelection;
-            var html = '<div style="text-align:center;">';
+            
+            var html = '<div style="text-align:center;" id="time-ui-container-' + uniqueTimeId + '">';
             html += '<p style="margin:5px 0; font-size:0.9rem;">How long for <strong>' + tool.brand + ' ' + tool.model + '</strong>?</p>';
             html += '<div class="time-input-row">';
-            html += '<input type="number" id="time-value" min="0" max="24" step="0.25">';
-            html += '<select id="time-unit"><option value="hours">Hours</option><option value="minutes">Minutes</option></select>';
-            html += '<button id="time-confirm-btn">Confirm</button>';
+            html += '<input type="number" id="time-value-' + uniqueTimeId + '" min="0" max="24" step="0.25">';
+            html += '<select id="time-unit-' + uniqueTimeId + '"><option value="hours">Hours</option><option value="minutes">Minutes</option></select>';
+            html += '<button id="time-confirm-btn-' + uniqueTimeId + '">Confirm</button>';
             html += '</div>';
             html += '<div class="time-presets">';
-            html += '<button onclick="setPresetTime(0.5)">30 min</button>';
-            html += '<button onclick="setPresetTime(1)">1 hour</button>';
-            html += '<button onclick="setPresetTime(1.5)">1.5 hrs</button>';
-            html += '<button onclick="setPresetTime(2)">2 hours</button>';
-            html += '<button onclick="setPresetTime(4)">4 hours</button>';
-            html += '<button onclick="setPresetTime(8)">Full shift</button>';
+            // Pass the unique ID to the preset function so it knows which box to fill
+            html += '<button onclick="setPresetTime(0.5, ' + uniqueTimeId + ')">30 min</button>';
+            html += '<button onclick="setPresetTime(1, ' + uniqueTimeId + ')">1 hour</button>';
+            html += '<button onclick="setPresetTime(1.5, ' + uniqueTimeId + ')">1.5 hrs</button>';
+            html += '<button onclick="setPresetTime(2, ' + uniqueTimeId + ')">2 hours</button>';
+            html += '<button onclick="setPresetTime(4, ' + uniqueTimeId + ')">4 hours</button>';
+            html += '<button onclick="setPresetTime(8, ' + uniqueTimeId + ')">Full shift</button>';
             html += '</div></div>';
             addHTMLBubble(html);
-            document.getElementById('time-confirm-btn').onclick = function() {
-                var val = parseFloat(document.getElementById('time-value').value);
-                var unit = document.getElementById('time-unit').value;
+
+            // Attach listener to the SPECIFIC unique button
+            document.getElementById('time-confirm-btn-' + uniqueTimeId).onclick = function() {
+                var val = parseFloat(document.getElementById('time-value-' + uniqueTimeId).value);
+                var unit = document.getElementById('time-unit-' + uniqueTimeId).value;
                 if (isNaN(val) || val <= 0) { alert('Enter valid time.'); return; }
                 var hours = unit === 'minutes' ? val / 60 : val;
                 handleTimeConfirmed(hours);
             };
         }
 
-        function setPresetTime(hours) {
-            var input = document.getElementById('time-value');
-            var unitSelect = document.getElementById('time-unit');
+        // Updated to target specific unique IDs
+        function setPresetTime(hours, uniqueId) {
+            var input = document.getElementById('time-value-' + uniqueId);
+            var unitSelect = document.getElementById('time-unit-' + uniqueId);
             if (hours < 1) { input.value = hours * 60; unitSelect.value = 'minutes'; }
             else { input.value = hours; unitSelect.value = 'hours'; }
-            document.getElementById('time-confirm-btn').click();
+            document.getElementById('time-confirm-btn-' + uniqueId).click();
         }
 
         function handleToolSelected(tool) {
@@ -626,15 +639,12 @@
             openCamera();
         }
 
-        // --- NEW SMART TIME VALIDATION ---
         function handleTimeConfirmed(hours) {
             var tool = state.currentToolSelection;
             var photo = state.currentPhoto;
             
-            // 1. Show the calculation card for the requested time
             addLimitCard(tool, hours);
             
-            // 2. Calculate limits
             var eavHours = 8 * Math.pow(2.5 / tool.vibration, 2);
             var elvHours = 8 * Math.pow(5.0 / tool.vibration, 2);
             
@@ -656,26 +666,23 @@
             var limitM = Math.floor((limitHours - limitH) * 60);
             var limitString = limitH + 'h ' + limitM + 'm';
             
-            // 3. Show Warning or Confirmation
             if (status === 'safe') {
                 addAppBubble('✅ Time is within safe limits.');
                 addActionButtons('Confirm & Log', 'Change Time', 
                     function() { finalizeLog(tool, photo, hours); }, 
-                    function() { showTimeInputUI(); }
+                    function() { showTimeInputUI(); } // This now creates a fresh UI with new IDs
                 );
             } else {
                 var msg = '⚠️ WARNING: ' + hours + ' hrs exceeds the ' + limitName + ' (' + limitString + ').';
                 if (status === 'danger') msg += ' This is ILLEGAL.';
                 addAppBubble(msg);
                 
-                // Force reduction or allow change
                 addActionButtons('Reduce to ' + limitString, 'Change Time', 
                     function() { 
-                        // Show a new card with the reduced time to prove it's now safe
                         addLimitCard(tool, limitHours); 
                         finalizeLog(tool, photo, limitHours); 
                     }, 
-                    function() { showTimeInputUI(); }
+                    function() { showTimeInputUI(); } // This now creates a fresh UI with new IDs
                 );
             }
         }
