@@ -162,7 +162,6 @@
         .confirm-bar .btn-edit { background: #FF9800; color: white; }
         .confirm-bar .btn-ok { background: var(--wa-green-btn); color: white; }
         
-        /* Search & Manual Entry Styles */
         .search-container {
             background: #f9f9f9;
             padding: 10px;
@@ -260,22 +259,16 @@
         <div class="modal-content">
             <h3>Site & Manager Setup</h3>
             <p style="font-size:0.85rem; color:#666; margin-bottom:10px;">Enter your company, project and manager details.</p>
-            
             <label class="form-label" for="setup-company">Company Name (your employer)</label>
             <input type="text" id="setup-company">
-            
             <label class="form-label" for="setup-project">Project Name</label>
             <input type="text" id="setup-project">
-            
             <label class="form-label" for="setup-number">Project Number</label>
             <input type="text" id="setup-number">
-            
             <label class="form-label" for="setup-name">Manager Name</label>
             <input type="text" id="setup-name">
-            
             <label class="form-label" for="setup-role">Manager Role / Position</label>
             <input type="text" id="setup-role">
-            
             <p style="font-size:0.85rem; color:#666; margin:10px 0 5px;">Company Logo (optional):</p>
             <input type="file" id="setup-logo" accept="image/*">
             <br>
@@ -389,11 +382,7 @@
             }
         };
 
-        // --- UPDATED: LOAD MULTIPLE JSON FILES ---
         async function loadToolDB() {
-            // List all your JSON files here. Add as many as you need!
-                  async function loadToolDB() {
-            // List all your JSON files here. Add as many as you need!
             const databaseFiles = [
                 'data-drills-hammers.json', 
                 'data-saws.json', 
@@ -403,7 +392,6 @@
                 'data-cordless-drills.json'
             ];
 
-            // Fetch all of them at the same time
             const promises = databaseFiles.map(function(file) {
                 return fetch(file).then(function(response) {
                     return response.json();
@@ -413,8 +401,6 @@
                 });
             });
 
-
-            // Combine them all into one big list
             try {
                 const results = await Promise.all(promises);
                 results.forEach(function(data) {
@@ -607,7 +593,6 @@
             if (val) confirmPendingValue(val);
         }
 
-        // --- INTERNAL SEARCH ENGINE ---
         function showToolSearch() {
             var html = '<div class="search-container">';
             html += '<label class="form-label" style="margin-top:0;">Search Tool Database</label>';
@@ -649,19 +634,15 @@
         function showManualEntryForm() {
             var html = '<div class="manual-entry-form">';
             html += '<p style="margin:0 0 10px 0; font-size:0.9rem; font-weight:bold;">Enter Tool Details Manually</p>';
-            
             html += '<label class="form-label" style="margin-top:0;">Brand</label>';
             html += '<input type="text" id="manual-brand">';
-            
             html += '<label class="form-label">Model</label>';
             html += '<div class="input-row">';
             html += '<input type="text" id="manual-model">';
             html += '<button class="search-btn" id="google-search-btn" onclick="openGoogleSearch()"> Search</button>';
             html += '</div>';
-            
-            html += '<label class="form-label">Vibration (m/s²)</label>';
+            html += '<label class="form-label">Vibration (m/s&sup2;)</label>';
             html += '<input type="number" id="manual-vib" step="0.1">';
-            
             html += '<button id="manual-submit-btn" style="width:100%; margin-top:10px;">Add Tool</button>';
             html += '</div>';
             addHTMLBubble(html);
@@ -670,12 +651,10 @@
                 var brand = document.getElementById('manual-brand').value.trim();
                 var model = document.getElementById('manual-model').value.trim();
                 var vib = parseFloat(document.getElementById('manual-vib').value);
-                
                 if (!brand || !model || isNaN(vib) || vib <= 0) {
                     alert('Please fill in Brand, Model, and a valid Vibration value.');
                     return;
                 }
-                
                 var manualTool = {
                     category: 'Manual Entry',
                     brand: brand,
@@ -690,12 +669,10 @@
         function openGoogleSearch() {
             var brand = document.getElementById('manual-brand').value.trim();
             var model = document.getElementById('manual-model').value.trim();
-            
             if (!brand && !model) {
                 alert('Please enter at least the Brand or Model first.');
                 return;
             }
-            
             var query = brand + ' ' + model + ' vibration value m/s2 HAVS';
             var url = 'https://www.google.com/search?q=' + encodeURIComponent(query);
             window.open(url, '_blank');
@@ -886,14 +863,12 @@
 
             doc.setFillColor(7, 94, 84);
             doc.rect(0, 0, pageWidth, 35, 'F');
-            
             if (state.setup.logo) {
                 try {
                     var logoFmt = (state.setup.logo.indexOf('data:image/png') === 0) ? 'PNG' : 'JPEG';
                     doc.addImage(state.setup.logo, logoFmt, margin, 5, 25, 25);
                 } catch (e) {}
             }
-            
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(18); doc.setFont('helvetica', 'bold');
             var logoOffset = state.setup.logo ? 35 : 0;
@@ -952,7 +927,6 @@
                 var elvH = Math.floor(elvHours);
                 var elvM = Math.floor((elvHours - elvH) * 60);
                 var status = t.requestedHours > elvHours ? 'ILLEGAL' : (t.requestedHours > eavHours ? 'OVER EAV' : 'SAFE');
-
                 doc.setFontSize(7); doc.setFont('helvetica', 'normal');
                 if (status === 'ILLEGAL') doc.setTextColor(220, 38, 38);
                 else if (status === 'OVER EAV') doc.setTextColor(255, 152, 0);
