@@ -389,19 +389,49 @@
             }
         };
 
+        // --- UPDATED: LOAD MULTIPLE JSON FILES ---
         async function loadToolDB() {
-            try {
-                const response = await fetch('data.json');
-                const data = await response.json();
-                data.categories.forEach(function(cat) {
-                    cat.tools.forEach(function(tool) {
-                        TOOL_DB.push({
-                            category: cat.category, brand: tool.brand,
-                            model: tool.model, vibration: tool.vibration, note: tool.note || ''
-                        });
-                    });
+            // List all your JSON files here. Add as many as you need!
+            const databaseFiles = [
+                'data-drills-hammers.json', 
+                'data-saws.json', 
+                'data-grinders.json',
+                'data-sanders.json',
+                'data-breakers.json'
+            ];
+
+            // Fetch all of them at the same time
+            const promises = databaseFiles.map(function(file) {
+                return fetch(file).then(function(response) {
+                    return response.json();
+                }).catch(function(e) {
+                    console.warn('Could not load ' + file);
+                    return null;
                 });
-            } catch (e) { console.error('Failed to load data.json', e); }
+            });
+
+            // Combine them all into one big list
+            try {
+                const results = await Promise.all(promises);
+                results.forEach(function(data) {
+                    if (data && data.categories) {
+                        data.categories.forEach(function(cat) {
+                            cat.tools.forEach(function(tool) {
+                                TOOL_DB.push({
+                                    category: cat.category, 
+                                    brand: tool.brand,
+                                    model: tool.model, 
+                                    vibration: tool.vibration, 
+                                    note: tool.note || ''
+                                });
+                            });
+                        });
+                    }
+                });
+                console.log('Loaded ' + TOOL_DB.length + ' tools from database.');
+            } catch (e) { 
+                console.error('Error loading databases', e); 
+            }
         }
 
         function loadSetup() {
@@ -573,7 +603,7 @@
             if (val) confirmPendingValue(val);
         }
 
-        // --- NEW: INTERNAL SEARCH ENGINE ---
+        // --- INTERNAL SEARCH ENGINE ---
         function showToolSearch() {
             var html = '<div class="search-container">';
             html += '<label class="form-label" style="margin-top:0;">Search Tool Database</label>';
