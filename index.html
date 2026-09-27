@@ -182,6 +182,8 @@
             <p style="font-size:0.85rem; color:#666; margin:10px 0 5px;">Company Logo (optional):</p>
             <input type="file" id="setup-logo" accept="image/*">
             <br>
+            <button id="test-voice-btn" class="secondary" style="margin:10px 0;">🔊 Test Voice</button>
+            <br>
             <button id="setup-save">Save & Start</button>
         </div>
     </div>
@@ -238,12 +240,59 @@
         const micBtn = document.getElementById('mic-btn');
         const sendBtn = document.getElementById('send-btn');
 
+        // --- VOICE SYNTHESIS SETUP (FIXED FOR iOS) ---
+        let voicesLoaded = false;
+        let selectedVoice = null;
+
+        function loadVoices() {
+            if (!('speechSynthesis' in window)) return;
+            var voices = window.speechSynthesis.getVoices();
+            if (voices.length > 0) {
+                voicesLoaded = true;
+                // Prefer British English voices
+                var gbVoice = voices.find(function(v) { return v.lang && v.lang.toLowerCase().startsWith('en-gb'); });
+                var enVoice = voices.find(function(v) { return v.lang && v.lang.toLowerCase().startsWith('en'); });
+                selectedVoice = gbVoice || enVoice || voices[0];
+            }
+        }
+
+        if ('speechSynthesis' in window) {
+            loadVoices();
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+            // Poll for voices (iOS Safari quirk)
+            var voicePoll = setInterval(function() {
+                loadVoices();
+                if (voicesLoaded) clearInterval(voicePoll);
+            }, 500);
+        }
+
+        function speak(text) {
+            if (!('speechSynthesis' in window)) return;
+            // Cancel any ongoing speech
+            window.speechSynthesis.cancel();
+            // Small delay needed on iOS
+            setTimeout(function() {
+                var utterance = new SpeechSynthesisUtterance(text);
+                if (selectedVoice) {
+                    utterance.voice = selectedVoice;
+                    utterance.lang = selectedVoice.lang;
+                } else {
+                    utterance.lang = 'en-GB';
+                }
+                utterance.rate = 0.95;
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }, 100);
+        }
+
         window.onload = async function() {
             await loadToolDB();
             loadSetup();
             if (state.setup.project) {
                 updateHeader();
-                askOperativeName();
+                // Delay first speak to ensure voices are loaded
+                setTimeout(function() { askOperativeName(); }, 500);
             } else {
                 document.getElementById('setup-modal').style.display = 'flex';
             }
@@ -310,33 +359,22 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        // CORRECTED: Shows BOTH EAV and ELV limits
         function addLimitCard(tool, timeHours) {
-            // EAV (Exposure Action Value) at 2.5 m/s² A(8)
             var eavHours = 8 * Math.pow(2.5 / tool.vibration, 2);
             var eavH = Math.floor(eavHours);
             var eavM = Math.floor((eavHours - eavH) * 60);
-            
-            // ELV (Exposure Limit Value) at 5.0 m/s² A(8)
             var elvHours = 8 * Math.pow(5.0 / tool.vibration, 2);
             var elvH = Math.floor(elvHours);
             var elvM = Math.floor((elvHours - elvH) * 60);
-            
             var statusClass = 'safe', statusText = 'SAFE';
-            if (timeHours > elvHours) { 
-                statusClass = 'danger'; 
-                statusText = 'ILLEGAL - EXCEEDS LIMIT'; 
-            } else if (timeHours > eavHours) { 
-                statusClass = 'warn'; 
-                statusText = 'OVER ACTION VALUE'; 
-            }
-            
+            if (timeHours > elvHours) { statusClass = 'danger'; statusText = 'ILLEGAL - EXCEEDS LIMIT'; }
+            else if (timeHours > eavHours) { statusClass = 'warn'; statusText = 'OVER ACTION VALUE'; }
             var html = '<div class="limit-card ' + statusClass + '">';
             html += '<div class="limit-title">' + tool.brand + ' ' + tool.model + ' <span style="float:right;">' + statusText + '</span></div>';
-            html += '<div class="limit-row"><span>Vibration:</span><span>' + tool.vibration + ' m/s²</span></div>';
+            html += '<div class="limit-row"><span>Vibration:</span><span>' + tool.vibration + ' m/s&sup2;</span></div>';
             html += '<div class="limit-row"><span>Requested Time:</span><span>' + timeHours + ' hrs</span></div>';
-            html += '<div class="limit-row" style="color:#FF9800;"><span>⚠️ Time to Action Value (2.5):</span><span>' + eavH + 'h ' + eavM + 'm</span></div>';
-            html += '<div class="limit-row" style="color:#FF5252; font-weight:bold;"><span>🛑 Time to Limit Value (5.0):</span><span>' + elvH + 'h ' + elvM + 'm</span></div>';
+            html += '<div class="limit-row" style="color:#FF9800;"><span>&#9888;&#65039; Time to Action Value (2.5):</span><span>' + eavH + 'h ' + eavM + 'm</span></div>';
+            html += '<div class="limit-row" style="color:#FF5252; font-weight:bold;"><span>&#128721; Time to Limit Value (5.0):</span><span>' + elvH + 'h ' + elvM + 'm</span></div>';
             html += '</div>';
             addHTMLBubble(html);
         }
@@ -395,7 +433,6 @@
         function confirmPendingValue(value) {
             var field = state.pendingField;
             state.pendingValue = value.trim();
-
             if (field === 'name') {
                 state.currentOperative.name = state.pendingValue;
                 addUserBubble(state.pendingValue);
@@ -448,7 +485,7 @@
         function showToolDropdown() {
             var html = '<select class="tool-select" id="tool-dropdown"><option value="">-- Select tool --</option>';
             TOOL_DB.forEach(function(t, i) {
-                html += '<option value="' + i + '">' + t.brand + ' ' + t.model + ' (' + t.vibration + ' m/s²)</option>';
+                html += '<option value="' + i + '">' + t.brand + ' ' + t.model + ' (' + t.vibration + ' m/s&sup2;)</option>';
             });
             html += '</select>';
             html += '<span class="explanation-toggle" onclick="toggleExplanation(this)">Show explanation</span>';
@@ -507,15 +544,6 @@
             recognition.lang = 'en-GB';
         }
 
-        function speak(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                var u = new SpeechSynthesisUtterance(text);
-                u.rate = 0.95;
-                window.speechSynthesis.speak(u);
-            }
-        }
-
         function startListening() {
             if (!recognition) { textInput.focus(); return; }
             micBtn.classList.add('active');
@@ -572,7 +600,7 @@
 
         function handleToolSelected(tool) {
             state.currentToolSelection = tool;
-            addAppBubble('Found: ' + tool.brand + ' ' + tool.model + ' (' + tool.vibration + ' m/s²). ' + (tool.note ? tool.note + '. ' : '') + 'Please take a photo to check its condition.');
+            addAppBubble('Found: ' + tool.brand + ' ' + tool.model + ' (' + tool.vibration + ' m/s\u00B2). ' + (tool.note ? tool.note + '. ' : '') + 'Please take a photo to check its condition.');
             state.step = 'TOOL_PHOTO';
             openCamera();
         }
@@ -706,16 +734,12 @@
             y += 5;
 
             state.currentOperative.tools.forEach(function(t) {
-                // EAV at 2.5 m/s²
                 var eavHours = 8 * Math.pow(2.5 / t.vibration, 2);
                 var eavH = Math.floor(eavHours);
                 var eavM = Math.floor((eavHours - eavH) * 60);
-                
-                // ELV at 5.0 m/s²
                 var elvHours = 8 * Math.pow(5.0 / t.vibration, 2);
                 var elvH = Math.floor(elvHours);
                 var elvM = Math.floor((elvHours - elvH) * 60);
-                
                 var status = t.requestedHours > elvHours ? 'ILLEGAL' : (t.requestedHours > eavHours ? 'OVER EAV' : 'SAFE');
 
                 doc.setFontSize(8); doc.setFont('helvetica', 'normal');
@@ -808,6 +832,11 @@
             if (confirm('Reset all setup data?')) { localStorage.removeItem('havs_setup'); location.reload(); }
         };
 
+        // Test voice button
+        document.getElementById('test-voice-btn').onclick = function() {
+            speak('Hello! This is a test of the voice system. If you can hear this, the voice is working correctly.');
+        };
+
         document.getElementById('setup-save').onclick = function() {
             state.setup.project = document.getElementById('setup-project').value.trim();
             state.setup.number = document.getElementById('setup-number').value.trim();
@@ -817,9 +846,9 @@
             var logoFile = document.getElementById('setup-logo').files[0];
             if (logoFile) {
                 var reader = new FileReader();
-                reader.onload = function(e) { state.setup.logo = e.target.result; saveSetup(); document.getElementById('setup-modal').style.display = 'none'; askOperativeName(); };
+                reader.onload = function(e) { state.setup.logo = e.target.result; saveSetup(); document.getElementById('setup-modal').style.display = 'none'; setTimeout(function() { askOperativeName(); }, 300); };
                 reader.readAsDataURL(logoFile);
-            } else { saveSetup(); document.getElementById('setup-modal').style.display = 'none'; askOperativeName(); }
+            } else { saveSetup(); document.getElementById('setup-modal').style.display = 'none'; setTimeout(function() { askOperativeName(); }, 300); }
         };
     </script>
 </body>
