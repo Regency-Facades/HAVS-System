@@ -87,8 +87,18 @@
             width: 90%; max-width: 400px; text-align: center;
         }
         .modal-content h3 { margin-top: 0; color: var(--wa-header); }
+        .form-label {
+            display: block;
+            text-align: left;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #333;
+            margin: 10px 0 4px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
         .modal input[type="text"] {
-            width: 100%; padding: 12px; margin: 8px 0;
+            width: 100%; padding: 12px; margin: 0 0 5px 0;
             border: 1px solid #ccc; border-radius: 5px;
             box-sizing: border-box; font-size: 1rem;
         }
@@ -174,15 +184,27 @@
     <div id="setup-modal" class="modal">
         <div class="modal-content">
             <h3>Site & Manager Setup</h3>
-            <p style="font-size:0.85rem; color:#666; margin-bottom:15px;">Enter your project and manager details.</p>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:10px;">Enter your company, project and manager details.</p>
+            
+            <label class="form-label" for="setup-company">Company Name (your employer)</label>
+            <input type="text" id="setup-company">
+            
+            <label class="form-label" for="setup-project">Project Name</label>
             <input type="text" id="setup-project">
+            
+            <label class="form-label" for="setup-number">Project Number</label>
             <input type="text" id="setup-number">
+            
+            <label class="form-label" for="setup-name">Manager Name</label>
             <input type="text" id="setup-name">
+            
+            <label class="form-label" for="setup-role">Manager Role / Position</label>
             <input type="text" id="setup-role">
+            
             <p style="font-size:0.85rem; color:#666; margin:10px 0 5px;">Company Logo (optional):</p>
             <input type="file" id="setup-logo" accept="image/*">
             <br>
-            <button id="test-voice-btn" class="secondary" style="margin:10px 0;">🔊 Test Voice</button>
+            <button id="test-voice-btn" class="secondary" style="margin:10px 0;">&#128266; Test Voice</button>
             <br>
             <button id="setup-save">Save & Start</button>
         </div>
@@ -225,7 +247,7 @@
     <script>
         let TOOL_DB = [];
         let state = {
-            setup: { project: '', number: '', name: '', role: '', logo: null },
+            setup: { company: '', project: '', number: '', name: '', role: '', logo: null },
             currentOperative: { name: '', employer: '', area: '', tools: [] },
             step: 'IDLE',
             currentToolSelection: null,
@@ -240,7 +262,6 @@
         const micBtn = document.getElementById('mic-btn');
         const sendBtn = document.getElementById('send-btn');
 
-        // --- VOICE SYNTHESIS SETUP (FIXED FOR iOS) ---
         let voicesLoaded = false;
         let selectedVoice = null;
 
@@ -249,7 +270,6 @@
             var voices = window.speechSynthesis.getVoices();
             if (voices.length > 0) {
                 voicesLoaded = true;
-                // Prefer British English voices
                 var gbVoice = voices.find(function(v) { return v.lang && v.lang.toLowerCase().startsWith('en-gb'); });
                 var enVoice = voices.find(function(v) { return v.lang && v.lang.toLowerCase().startsWith('en'); });
                 selectedVoice = gbVoice || enVoice || voices[0];
@@ -259,7 +279,6 @@
         if ('speechSynthesis' in window) {
             loadVoices();
             window.speechSynthesis.onvoiceschanged = loadVoices;
-            // Poll for voices (iOS Safari quirk)
             var voicePoll = setInterval(function() {
                 loadVoices();
                 if (voicesLoaded) clearInterval(voicePoll);
@@ -268,9 +287,7 @@
 
         function speak(text) {
             if (!('speechSynthesis' in window)) return;
-            // Cancel any ongoing speech
             window.speechSynthesis.cancel();
-            // Small delay needed on iOS
             setTimeout(function() {
                 var utterance = new SpeechSynthesisUtterance(text);
                 if (selectedVoice) {
@@ -291,7 +308,6 @@
             loadSetup();
             if (state.setup.project) {
                 updateHeader();
-                // Delay first speak to ensure voices are loaded
                 setTimeout(function() { askOperativeName(); }, 500);
             } else {
                 document.getElementById('setup-modal').style.display = 'flex';
@@ -682,17 +698,28 @@
             var pageHeight = doc.internal.pageSize.getHeight();
             var margin = 15;
 
+            // Header band with logo
             doc.setFillColor(7, 94, 84);
-            doc.rect(0, 0, pageWidth, 30, 'F');
+            doc.rect(0, 0, pageWidth, 35, 'F');
+            
+            // Add logo if available
+            if (state.setup.logo) {
+                try {
+                    var logoFmt = (state.setup.logo.indexOf('data:image/png') === 0) ? 'PNG' : 'JPEG';
+                    doc.addImage(state.setup.logo, logoFmt, margin, 5, 25, 25);
+                } catch (e) {}
+            }
+            
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(18); doc.setFont('helvetica', 'bold');
-            doc.text('HAVS DAILY BRIEFING', margin, 12);
-            doc.setFontSize(10); doc.setFont('helvetica', 'normal');
-            doc.text('PROJECT: ' + (state.setup.project || 'N/A') + ' | No: ' + (state.setup.number || 'N/A'), margin, 20);
-            doc.text(state.setup.name + ' (' + state.setup.role + ')', pageWidth - margin, 12, { align: 'right' });
-            doc.text(new Date().toLocaleDateString('en-GB'), pageWidth - margin, 20, { align: 'right' });
+            var logoOffset = state.setup.logo ? 35 : 0;
+            doc.text('HAVS DAILY BRIEFING', margin + logoOffset, 14);
+            doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+            doc.text((state.setup.company || 'N/A') + ' | PROJECT: ' + (state.setup.project || 'N/A') + ' | No: ' + (state.setup.number || 'N/A'), margin + logoOffset, 22);
+            doc.text(state.setup.name + ' (' + state.setup.role + ')', pageWidth - margin, 14, { align: 'right' });
+            doc.text(new Date().toLocaleDateString('en-GB'), pageWidth - margin, 22, { align: 'right' });
 
-            var y = 40;
+            var y = 45;
             doc.setTextColor(0, 0, 0);
 
             doc.setFontSize(14); doc.setFont('helvetica', 'bold');
@@ -724,13 +751,13 @@
             doc.setFillColor(240, 240, 240);
             doc.rect(margin, y - 5, tableWidth, 8, 'F');
             doc.setDrawColor(150, 150, 150); doc.rect(margin, y - 5, tableWidth, 8);
-            doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7); doc.setFont('helvetica', 'bold');
             doc.text('Status', margin + 2, y);
             doc.text('Tool Name & Type', margin + 12, y);
             doc.text('Vib (m/s2)', margin + 72, y);
-            doc.text('Time to EAV', margin + 95, y);
-            doc.text('Time to ELV', margin + 120, y);
-            doc.text('Requested', margin + 145, y);
+            doc.text('Time to EAV', margin + 92, y);
+            doc.text('Time to ELV', margin + 115, y);
+            doc.text('Requested', margin + 138, y);
             y += 5;
 
             state.currentOperative.tools.forEach(function(t) {
@@ -742,7 +769,7 @@
                 var elvM = Math.floor((elvHours - elvH) * 60);
                 var status = t.requestedHours > elvHours ? 'ILLEGAL' : (t.requestedHours > eavHours ? 'OVER EAV' : 'SAFE');
 
-                doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7); doc.setFont('helvetica', 'normal');
                 if (status === 'ILLEGAL') doc.setTextColor(220, 38, 38);
                 else if (status === 'OVER EAV') doc.setTextColor(255, 152, 0);
                 else doc.setTextColor(34, 197, 94);
@@ -750,9 +777,9 @@
                 doc.setTextColor(0, 0, 0);
                 doc.text(t.brand + ' ' + t.model, margin + 12, y + 4);
                 doc.text(t.vibration.toString(), margin + 72, y + 4);
-                doc.text(eavH + 'h ' + eavM + 'm', margin + 95, y + 4);
-                doc.text(elvH + 'h ' + elvM + 'm', margin + 120, y + 4);
-                doc.text(t.requestedHours + ' hrs', margin + 145, y + 4);
+                doc.text(eavH + 'h ' + eavM + 'm', margin + 92, y + 4);
+                doc.text(elvH + 'h ' + elvM + 'm', margin + 115, y + 4);
+                doc.text(t.requestedHours + ' hrs', margin + 138, y + 4);
                 y += 7;
             });
             y += 5;
@@ -793,7 +820,7 @@
             for (var i = 1; i <= totalPages; i++) {
                 doc.setPage(i);
                 doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(150, 150, 150);
-                doc.text('HAVS Daily Briefing - ' + state.setup.project + ' - Ref: HAVS-' + new Date().toISOString().slice(0, 10), pageWidth / 2, pageHeight - 8, { align: 'center' });
+                doc.text('HAVS Daily Briefing - ' + state.setup.company + ' - ' + state.setup.project + ' - Ref: HAVS-' + new Date().toISOString().slice(0, 10), pageWidth / 2, pageHeight - 8, { align: 'center' });
                 doc.text('Page ' + i + ' of ' + totalPages, pageWidth - margin, pageHeight - 8, { align: 'right' });
             }
 
@@ -832,17 +859,17 @@
             if (confirm('Reset all setup data?')) { localStorage.removeItem('havs_setup'); location.reload(); }
         };
 
-        // Test voice button
         document.getElementById('test-voice-btn').onclick = function() {
             speak('Hello! This is a test of the voice system. If you can hear this, the voice is working correctly.');
         };
 
         document.getElementById('setup-save').onclick = function() {
+            state.setup.company = document.getElementById('setup-company').value.trim();
             state.setup.project = document.getElementById('setup-project').value.trim();
             state.setup.number = document.getElementById('setup-number').value.trim();
             state.setup.name = document.getElementById('setup-name').value.trim();
             state.setup.role = document.getElementById('setup-role').value.trim();
-            if (!state.setup.project || !state.setup.name) { alert('Project Name and Manager Name are required.'); return; }
+            if (!state.setup.company || !state.setup.project || !state.setup.name) { alert('Company Name, Project Name and Manager Name are required.'); return; }
             var logoFile = document.getElementById('setup-logo').files[0];
             if (logoFile) {
                 var reader = new FileReader();
