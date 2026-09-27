@@ -3,169 +3,79 @@
     {
       "category": "Rotary Hammers & Breakers",
       "tools": [
-        {
-          "brand": "Bosch",
-          "model": "GBH 2-26 D (Rotary Drill)",
-          "vibration": 11.0,
-          "note": "Value for hammer drilling concrete."
-        },
-        {
-          "brand": "Bosch",
-          "model": "GBH 2-26 D (Chiselling)",
-          "vibration": 14.0,
-          "note": "Value for light chiselling/scabbling."
-        },
-        {
-          "brand": "Hilti",
-          "model": "TE 6-A22 (Cordless)",
-          "vibration": 9.5,
-          "note": "AVR (Active Vibration Reduction) engaged."
-        },
-        {
-          "brand": "Hilti",
-          "model": "TE 3000-AVR (Heavy Breaker)",
-          "vibration": 8.5,
-          "note": "Value with moil point."
-        },
-        {
-          "brand": "DeWalt",
-          "model": "D25143 (SDS Plus)",
-          "vibration": 12.5,
-          "note": "Standard hammer drilling."
-        },
-        {
-          "brand": "Makita",
-          "model": "HR2470 (SDS Plus)",
-          "vibration": 10.5,
-          "note": "Standard rotary hammer."
-        }
+        { "brand": "Bosch", "model": "GBH 2-26 D (Rotary Drill)", "vibration": 11.0, "note": "Hammer drilling concrete." },
+        { "brand": "Bosch", "model": "GBH 2-26 D (Chiselling)", "vibration": 14.0, "note": "Light chiselling/scabbling." },
+        { "brand": "Bosch", "model": "GBH 3-28 DFR", "vibration": 9.0, "note": "Standard SDS Plus hammer." },
+        { "brand": "Bosch", "model": "GBH 5-40 DCE", "vibration": 13.0, "note": "Heavy duty SDS Max." },
+        { "brand": "Hilti", "model": "TE 6-A22 (Cordless)", "vibration": 9.5, "note": "AVR engaged." },
+        { "brand": "Hilti", "model": "TE 3000-AVR (Heavy Breaker)", "vibration": 8.5, "note": "With moil point." },
+        { "brand": "Hilti", "model": "TE 1000-AVR", "vibration": 11.0, "note": "Large breaker." },
+        { "brand": "DeWalt", "model": "D25143 (SDS Plus)", "vibration": 12.5, "note": "Standard hammer drilling." },
+        { "brand": "DeWalt", "model": "D25762K (SDS Max)", "vibration": 10.5, "note": "Heavy demolition." },
+        { "brand": "Makita", "model": "HR2470 (SDS Plus)", "vibration": 10.5, "note": "Standard rotary hammer." },
+        { "brand": "Makita", "model": "HM1203C (Breaker)", "vibration": 16.0, "note": "Heavy breaker." }
       ]
     },
     {
       "category": "Angle Grinders & Cutters",
       "tools": [
-        {
-          "brand": "Makita",
-          "model": "DGA504 (125mm Cordless)",
-          "vibration": 6.0,
-          "note": "Grinding concrete/stone."
-        },
-        {
-          "brand": "DeWalt",
-          "model": "DCG405 (125mm Cordless)",
-          "vibration": 7.2,
-          "note": "Cutting metal/stone."
-        },
-        {
-          "brand": "Bosch",
-          "model": "GWS 20-230 (230mm Large)",
-          "vibration": 9.5,
-          "note": "Large grinder, high vibration."
-        },
-        {
-          "brand": "Hilti",
-          "model": "AG 4S-A22 (125mm Cordless)",
-          "vibration": 5.5,
-          "note": "With vibration-reduced handle."
-        }
+        { "brand": "Makita", "model": "DGA504 (125mm Cordless)", "vibration": 6.0, "note": "Grinding concrete/stone." },
+        { "brand": "Makita", "model": "GA4530R (115mm 110V)", "vibration": 7.5, "note": "Standard small grinder." },
+        { "brand": "Makita", "model": "GA9020 (230mm Large)", "vibration": 8.5, "note": "Large grinder." },
+        { "brand": "DeWalt", "model": "DCG405 (125mm Cordless)", "vibration": 7.2, "note": "Cutting metal/stone." },
+        { "brand": "DeWalt", "model": "DWE4257 (125mm 110V)", "vibration": 6.5, "note": "With vibration handle." },
+        { "brand": "Bosch", "model": "GWS 20-230 (230mm Large)", "vibration": 9.5, "note": "Large grinder, high vibration." },
+        { "brand": "Bosch", "model": "GWS 850 CE (125mm)", "vibration": 7.0, "note": "Standard grinder." },
+        { "brand": "Hilti", "model": "AG 4S-A22 (125mm Cordless)", "vibration": 5.5, "note": "With vibration-reduced handle." }
       ]
     },
     {
       "category": "Sanders & Polishers",
       "tools": [
-        {
-          "brand": "Makita",
-          "model": "BO5041 (Orbital Sander)",
-          "vibration": 6.5,
-          "note": "Sanding wood/metal."
-        },
-        {
-          "brand": "Bosch",
-          "model": "GEX 125-150 AVE",
-          "vibration": 5.5,
-          "note": "Random orbital sander."
-        },
-        {
-          "brand": "DeWalt",
-          "model": "DWE6423 (Orbital)",
-          "vibration": 6.0,
-          "note": "Standard finishing sander."
-        }
+        { "brand": "Makita", "model": "BO5041 (Orbital Sander)", "vibration": 6.5, "note": "Sanding wood/metal." },
+        { "brand": "Makita", "model": "9227CB (Polisher)", "vibration": 5.0, "note": "Variable speed polisher." },
+        { "brand": "Bosch", "model": "GEX 125-150 AVE", "vibration": 5.5, "note": "Random orbital sander." },
+        { "brand": "DeWalt", "model": "DWE6423 (Orbital)", "vibration": 6.0, "note": "Standard finishing sander." },
+        { "brand": "Festool", "model": "RO 150 FEQ", "vibration": 3.5, "note": "Rotex sander (low vibration)." }
       ]
     },
     {
       "category": "Saws & Cutters",
       "tools": [
-        {
-          "brand": "Makita",
-          "model": "DSS610 (Circular Saw)",
-          "vibration": 2.5,
-          "note": "Cutting timber."
-        },
-        {
-          "brand": "DeWalt",
-          "model": "DCS570 (Circular Saw)",
-          "vibration": 3.0,
-          "note": "Cutting timber/MDF."
-        },
-        {
-          "brand": "Hilti",
-          "model": "SCM 22-A (Cutting Machine)",
-          "vibration": 4.5,
-          "note": "Diamond cutting concrete."
-        },
-        {
-          "brand": "Stihl",
-          "model": "MS 261 (Chainsaw)",
-          "vibration": 4.0,
-          "note": "Front handle / Rear handle avg."
-        },
-        {
-          "brand": "Husqvarna",
-          "model": "540i XP (Cordless Chainsaw)",
-          "vibration": 2.8,
-          "note": "Battery powered, lower vibration."
-        }
+        { "brand": "Makita", "model": "DSS610 (Circular Saw)", "vibration": 2.5, "note": "Cutting timber." },
+        { "brand": "Makita", "model": "JR3050T (Reciprocating Saw)", "vibration": 10.0, "note": "Demolition saw." },
+        { "brand": "DeWalt", "model": "DCS570 (Circular Saw)", "vibration": 3.0, "note": "Cutting timber/MDF." },
+        { "brand": "DeWalt", "model": "D25902K (Demolition Saw)", "vibration": 12.0, "note": "Heavy reciprocating saw." },
+        { "brand": "Hilti", "model": "SCM 22-A (Cutting Machine)", "vibration": 4.5, "note": "Diamond cutting concrete." },
+        { "brand": "Stihl", "model": "MS 261 (Chainsaw)", "vibration": 4.0, "note": "Front/Rear handle avg." },
+        { "brand": "Stihl", "model": "MS 500i (Large Chainsaw)", "vibration": 5.5, "note": "Professional felling saw." },
+        { "brand": "Husqvarna", "model": "540i XP (Cordless Chainsaw)", "vibration": 2.8, "note": "Battery powered, lower vibration." }
       ]
     },
     {
       "category": "Drills & Drivers",
       "tools": [
-        {
-          "brand": "Makita",
-          "model": "LXT DHP484 (Combi Drill)",
-          "vibration": 2.5,
-          "note": "Drilling wood/metal."
-        },
-        {
-          "brand": "DeWalt",
-          "model": "DCD996 (Combi Drill)",
-          "vibration": 3.5,
-          "note": "Hammer drilling masonry."
-        },
-        {
-          "brand": "Bosch",
-          "model": "GSR 18V-50 (Driver Drill)",
-          "vibration": 2.0,
-          "note": "Standard screwdriving."
-        }
+        { "brand": "Makita", "model": "LXT DHP484 (Combi Drill)", "vibration": 2.5, "note": "Drilling wood/metal." },
+        { "brand": "Makita", "model": "LXT DHP484 (Hammer Masonry)", "vibration": 6.0, "note": "Hammer drilling brick." },
+        { "brand": "DeWalt", "model": "DCD996 (Combi Drill)", "vibration": 3.5, "note": "Hammer drilling masonry." },
+        { "brand": "Bosch", "model": "GSR 18V-50 (Driver Drill)", "vibration": 2.0, "note": "Standard screwdriving." },
+        { "brand": "Milwaukee", "model": "M18 FPD2 (Combi)", "vibration": 2.8, "note": "Fuel brushless drill." }
       ]
     },
     {
       "category": "Needle Guns & Scabblers",
       "tools": [
-        {
-          "brand": "Chicago Pneumatic",
-          "model": "CP7200 (Needle Scaler)",
-          "vibration": 18.0,
-          "note": "Extremely high vibration! Limit use."
-        },
-        {
-          "brand": "Ingersoll Rand",
-          "model": "QX350 (Needle Gun)",
-          "vibration": 16.5,
-          "note": "Rust removal/scabbling."
-        }
+        { "brand": "Chicago Pneumatic", "model": "CP7200 (Needle Scaler)", "vibration": 18.0, "note": "Extremely high vibration! Limit use." },
+        { "brand": "Ingersoll Rand", "model": "QX350 (Needle Gun)", "vibration": 16.5, "note": "Rust removal/scabbling." },
+        { "brand": "Atlas Copco", "model": "BTV 3400 (Scabbler)", "vibration": 15.0, "note": "Concrete scabbling." }
+      ]
+    },
+    {
+      "category": "Road Breakers & Rammers",
+      "tools": [
+        { "brand": "Wacker Neuson", "model": "BHR 26 (Breaker)", "vibration": 12.0, "note": "Petrol breaker." },
+        { "brand": "Wacker Neuson", "model": "BS 60-4 (Rammer)", "vibration": 8.0, "note": "Soil compaction." },
+        { "brand": "Bomag", "model": "BT 65 (Rammer)", "vibration": 7.5, "note": "Tamping rammer." }
       ]
     }
   ]
