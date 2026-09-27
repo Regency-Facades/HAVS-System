@@ -392,12 +392,15 @@
         // --- UPDATED: LOAD MULTIPLE JSON FILES ---
         async function loadToolDB() {
             // List all your JSON files here. Add as many as you need!
+                  async function loadToolDB() {
+            // List all your JSON files here. Add as many as you need!
             const databaseFiles = [
                 'data-drills-hammers.json', 
                 'data-saws.json', 
-                'data-grinders.json',
-                'data-sanders.json',
-                'data-breakers.json'
+                'data-grinders-cutters.json',
+                'data-demolition-pneumatic.json',
+                'data-mixers.json',
+                'data-cordless-drills.json'
             ];
 
             // Fetch all of them at the same time
@@ -409,6 +412,7 @@
                     return null;
                 });
             });
+
 
             // Combine them all into one big list
             try {
