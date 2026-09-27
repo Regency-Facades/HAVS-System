@@ -312,6 +312,7 @@
 
     <script>
         let TOOL_DB = [];
+        let searchCounter = 0; // NEW: Counter for unique IDs
         let state = {
             setup: { company: '', project: '', number: '', name: '', role: '', logo: null },
             currentOperative: { name: '', employer: '', area: '', tools: [] },
@@ -528,18 +529,26 @@
             if (e.key === 'Enter' && textInput.value.trim()) handleInput(textInput.value.trim());
         });
 
+        // FIXED: Using unique IDs with counter
         function showToolSearch() {
+            searchCounter++; // Increment counter for unique IDs
+            var uniqueId = searchCounter;
+            
             var html = '<div class="search-container">';
             html += '<label class="form-label" style="margin-top:0;">Search Tool Database</label>';
-            html += '<input type="text" id="tool-search-input" class="search-input">';
-            html += '<div id="tool-search-results" class="search-results"></div>';
-            html += '<button id="btn-manual-entry" class="action-btn" style="margin-top:10px; width:100%; background:#FF9800;">Tool not listed? Add Manually</button>';
+            html += '<input type="text" id="tool-search-input-' + uniqueId + '" class="search-input">';
+            html += '<div id="tool-search-results-' + uniqueId + '" class="search-results"></div>';
+            html += '<button id="btn-manual-entry-' + uniqueId + '" class="action-btn" style="margin-top:10px; width:100%; background:#FF9800;">Tool not listed? Add Manually</button>';
             html += '</div>';
             addHTMLBubble(html);
 
-            document.getElementById('tool-search-input').addEventListener('input', function(e) {
+            // Now attach event listener to the SPECIFIC unique ID
+            var searchInput = document.getElementById('tool-search-input-' + uniqueId);
+            var resultsDiv = document.getElementById('tool-search-results-' + uniqueId);
+            var manualBtn = document.getElementById('btn-manual-entry-' + uniqueId);
+
+            searchInput.addEventListener('input', function(e) {
                 var query = e.target.value.toLowerCase().trim();
-                var resultsDiv = document.getElementById('tool-search-results');
                 resultsDiv.innerHTML = '';
 
                 if (query.length < 2) return;
@@ -561,7 +570,7 @@
                 }
             });
 
-            document.getElementById('btn-manual-entry').onclick = function() {
+            manualBtn.onclick = function() {
                 showManualEntryForm();
             };
         }
