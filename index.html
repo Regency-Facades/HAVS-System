@@ -126,16 +126,6 @@
         .modal button.secondary { background: var(--wa-header-light); }
         #camera-video { width: 100%; max-height: 300px; background: black; border-radius: 8px; }
         
-        .explanation-toggle {
-            font-size: 0.75rem; color: #128C7E; cursor: pointer;
-            text-decoration: underline; display: block; margin-top: 5px;
-        }
-        .explanation-box {
-            background-color: #f0f0f0; border-left: 3px solid #128C7E;
-            padding: 8px; border-radius: 0 5px 5px 0;
-            font-size: 0.8rem; color: #555; text-align: left;
-            margin-top: 5px; display: none;
-        }
         .time-input-row {
             display: flex; gap: 8px; margin: 10px 0;
             align-items: center; justify-content: center; flex-wrap: wrap;
@@ -312,15 +302,14 @@
 
     <script>
         let TOOL_DB = [];
-        let searchCounter = 0; // NEW: Counter for unique IDs
+        let searchCounter = 0;
         let state = {
             setup: { company: '', project: '', number: '', name: '', role: '', logo: null },
             currentOperative: { name: '', employer: '', area: '', tools: [] },
             step: 'IDLE',
             currentToolSelection: null,
             currentPhoto: null,
-            stream: null,
-            pendingField: ''
+            stream: null
         };
 
         const chatContainer = document.getElementById('chat-container');
@@ -449,19 +438,14 @@
             var div = document.createElement('div');
             div.className = 'bubble app';
             div.style.background = 'transparent'; div.style.boxShadow = 'none'; div.style.padding = '0';
+            div.style.display = 'flex'; div.style.gap = '10px';
             var b1 = document.createElement('button'); b1.className = 'action-btn'; b1.innerText = btn1Text;
-            b1.onclick = function() { addUserBubble(btn1Text); action1(); };
+            b1.onclick = function() { action1(); };
             var b2 = document.createElement('button'); b2.className = 'action-btn'; b2.innerText = btn2Text;
-            b2.onclick = function() { addUserBubble(btn2Text); action2(); };
+            b2.onclick = function() { action2(); };
             div.appendChild(b1); div.appendChild(b2);
             chatContainer.appendChild(div);
             chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        function toggleExplanation(el) {
-            var box = el.nextElementSibling;
-            if (box.style.display === 'block') { box.style.display = 'none'; el.innerText = 'Show explanation'; }
-            else { box.style.display = 'block'; el.innerText = 'Hide explanation'; }
         }
 
         function askOperativeName() {
@@ -511,10 +495,8 @@
             } else if (state.step === 'END') {
                 var lower = value.toLowerCase();
                 if (lower.includes('report') || lower.includes('generate') || lower.includes('finish') || lower.includes('done')) {
-                    addUserBubble('Generate Report');
                     openSignature();
                 } else if (lower.includes('add') || lower.includes('new') || lower.includes('another') || lower.includes('tool')) {
-                    addUserBubble('Add Another Tool');
                     askToolSelection();
                 } else {
                     addAppBubble('Please type "add another tool" or "generate report".');
@@ -529,9 +511,8 @@
             if (e.key === 'Enter' && textInput.value.trim()) handleInput(textInput.value.trim());
         });
 
-        // FIXED: Using unique IDs with counter
         function showToolSearch() {
-            searchCounter++; // Increment counter for unique IDs
+            searchCounter++;
             var uniqueId = searchCounter;
             
             var html = '<div class="search-container">';
@@ -542,7 +523,6 @@
             html += '</div>';
             addHTMLBubble(html);
 
-            // Now attach event listener to the SPECIFIC unique ID
             var searchInput = document.getElementById('tool-search-input-' + uniqueId);
             var resultsDiv = document.getElementById('tool-search-results-' + uniqueId);
             var manualBtn = document.getElementById('btn-manual-entry-' + uniqueId);
@@ -550,7 +530,6 @@
             searchInput.addEventListener('input', function(e) {
                 var query = e.target.value.toLowerCase().trim();
                 resultsDiv.innerHTML = '';
-
                 if (query.length < 2) return;
 
                 var matches = TOOL_DB.filter(function(t) {
@@ -558,7 +537,7 @@
                 });
 
                 if (matches.length === 0) {
-                    resultsDiv.innerHTML = '<p style="color:#666; font-size:0.8rem; text-align:center; padding:10px;">No matches found in database.</p>';
+                    resultsDiv.innerHTML = '<p style="color:#666; font-size:0.8rem; text-align:center; padding:10px;">No matches found.</p>';
                 } else {
                     matches.forEach(function(tool) {
                         var btn = document.createElement('button');
@@ -570,9 +549,7 @@
                 }
             });
 
-            manualBtn.onclick = function() {
-                showManualEntryForm();
-            };
+            manualBtn.onclick = function() { showManualEntryForm(); };
         }
 
         function showManualEntryForm() {
@@ -583,7 +560,7 @@
             html += '<label class="form-label">Model</label>';
             html += '<div class="input-row">';
             html += '<input type="text" id="manual-model">';
-            html += '<button class="search-btn" id="google-search-btn" onclick="openGoogleSearch()"> Search</button>';
+            html += '<button class="search-btn" onclick="openGoogleSearch()"> Search</button>';
             html += '</div>';
             html += '<label class="form-label">Vibration (m/s&sup2;)</label>';
             html += '<input type="number" id="manual-vib" step="0.1">';
@@ -595,37 +572,22 @@
                 var brand = document.getElementById('manual-brand').value.trim();
                 var model = document.getElementById('manual-model').value.trim();
                 var vib = parseFloat(document.getElementById('manual-vib').value);
-                if (!brand || !model || isNaN(vib) || vib <= 0) {
-                    alert('Please fill in Brand, Model, and a valid Vibration value.');
-                    return;
-                }
-                var manualTool = {
-                    category: 'Manual Entry',
-                    brand: brand,
-                    model: model,
-                    vibration: vib,
-                    note: 'Manually entered tool'
-                };
-                handleToolSelected(manualTool);
+                if (!brand || !model || isNaN(vib) || vib <= 0) { alert('Please fill in all fields.'); return; }
+                handleToolSelected({ category: 'Manual', brand: brand, model: model, vibration: vib, note: '' });
             };
         }
 
         function openGoogleSearch() {
             var brand = document.getElementById('manual-brand').value.trim();
             var model = document.getElementById('manual-model').value.trim();
-            if (!brand && !model) {
-                alert('Please enter at least the Brand or Model first.');
-                return;
-            }
             var query = brand + ' ' + model + ' vibration value m/s2 HAVS';
-            var url = 'https://www.google.com/search?q=' + encodeURIComponent(query);
-            window.open(url, '_blank');
+            window.open('https://www.google.com/search?q=' + encodeURIComponent(query), '_blank');
         }
 
         function showTimeInputUI() {
             var tool = state.currentToolSelection;
             var html = '<div style="text-align:center;">';
-            html += '<p style="margin:5px 0; font-size:0.9rem;">How long will the operative use the <strong>' + tool.brand + ' ' + tool.model + '</strong> today?</p>';
+            html += '<p style="margin:5px 0; font-size:0.9rem;">How long for <strong>' + tool.brand + ' ' + tool.model + '</strong>?</p>';
             html += '<div class="time-input-row">';
             html += '<input type="number" id="time-value" min="0" max="24" step="0.25">';
             html += '<select id="time-unit"><option value="hours">Hours</option><option value="minutes">Minutes</option></select>';
@@ -638,13 +600,12 @@
             html += '<button onclick="setPresetTime(2)">2 hours</button>';
             html += '<button onclick="setPresetTime(4)">4 hours</button>';
             html += '<button onclick="setPresetTime(8)">Full shift</button>';
-            html += '</div>';
-            html += '</div>';
+            html += '</div></div>';
             addHTMLBubble(html);
             document.getElementById('time-confirm-btn').onclick = function() {
                 var val = parseFloat(document.getElementById('time-value').value);
                 var unit = document.getElementById('time-unit').value;
-                if (isNaN(val) || val <= 0) { alert('Please enter a valid time.'); return; }
+                if (isNaN(val) || val <= 0) { alert('Enter valid time.'); return; }
                 var hours = unit === 'minutes' ? val / 60 : val;
                 handleTimeConfirmed(hours);
             };
@@ -660,20 +621,71 @@
 
         function handleToolSelected(tool) {
             state.currentToolSelection = tool;
-            addAppBubble('Found: ' + tool.brand + ' ' + tool.model + ' (' + tool.vibration + ' m/s\u00B2). ' + (tool.note ? tool.note + '. ' : '') + 'Please take a photo to check its condition.');
+            addAppBubble('Found: ' + tool.brand + ' ' + tool.model + ' (' + tool.vibration + ' m/s\u00B2). Please take a photo.');
             state.step = 'TOOL_PHOTO';
             openCamera();
         }
 
+        // --- NEW SMART TIME VALIDATION ---
         function handleTimeConfirmed(hours) {
             var tool = state.currentToolSelection;
             var photo = state.currentPhoto;
+            
+            // 1. Show the calculation card for the requested time
             addLimitCard(tool, hours);
+            
+            // 2. Calculate limits
+            var eavHours = 8 * Math.pow(2.5 / tool.vibration, 2);
+            var elvHours = 8 * Math.pow(5.0 / tool.vibration, 2);
+            
+            var status = 'safe';
+            var limitHours = eavHours;
+            var limitName = 'Action Value (2.5)';
+            
+            if (hours > elvHours) {
+                status = 'danger';
+                limitHours = elvHours;
+                limitName = 'Exposure Limit (5.0)';
+            } else if (hours > eavHours) {
+                status = 'warn';
+                limitHours = eavHours;
+                limitName = 'Action Value (2.5)';
+            }
+            
+            var limitH = Math.floor(limitHours);
+            var limitM = Math.floor((limitHours - limitH) * 60);
+            var limitString = limitH + 'h ' + limitM + 'm';
+            
+            // 3. Show Warning or Confirmation
+            if (status === 'safe') {
+                addAppBubble('✅ Time is within safe limits.');
+                addActionButtons('Confirm & Log', 'Change Time', 
+                    function() { finalizeLog(tool, photo, hours); }, 
+                    function() { showTimeInputUI(); }
+                );
+            } else {
+                var msg = '⚠️ WARNING: ' + hours + ' hrs exceeds the ' + limitName + ' (' + limitString + ').';
+                if (status === 'danger') msg += ' This is ILLEGAL.';
+                addAppBubble(msg);
+                
+                // Force reduction or allow change
+                addActionButtons('Reduce to ' + limitString, 'Change Time', 
+                    function() { 
+                        // Show a new card with the reduced time to prove it's now safe
+                        addLimitCard(tool, limitHours); 
+                        finalizeLog(tool, photo, limitHours); 
+                    }, 
+                    function() { showTimeInputUI(); }
+                );
+            }
+        }
+
+        function finalizeLog(tool, photo, hours) {
             state.currentOperative.tools.push({
                 category: tool.category, brand: tool.brand, model: tool.model,
                 vibration: tool.vibration, note: tool.note, photo: photo, requestedHours: hours
             });
-            addAppBubble('Tool logged. Type "add another tool" or "generate report" below.');
+            addAppBubble('Tool logged. Type "add another tool" or "generate report".');
             state.step = 'END';
             textInput.value = '';
             textInput.focus();
@@ -689,7 +701,7 @@
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function(stream) {
                     state.stream = stream; video.srcObject = stream;
                 }).catch(function(e) {
-                    alert('Camera unavailable. Tool will be logged without photo.');
+                    alert('Camera unavailable.');
                     camModal.style.display = 'none';
                     state.currentPhoto = null;
                     askForTime();
@@ -700,19 +712,17 @@
         document.getElementById('cam-capture').onclick = function() {
             canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            var dataUrl = canvas.toDataURL('image/jpeg');
-            stopCamera(); state.currentPhoto = dataUrl; askForTime();
+            state.currentPhoto = canvas.toDataURL('image/jpeg');
+            stopCamera(); askForTime();
         };
-        document.getElementById('cam-cancel').onclick = function() {
-            stopCamera(); state.currentPhoto = null; askForTime();
-        };
+        document.getElementById('cam-cancel').onclick = function() { stopCamera(); state.currentPhoto = null; askForTime(); };
         function stopCamera() {
             if (state.stream) { state.stream.getTracks().forEach(function(t){ t.stop(); }); state.stream = null; }
             camModal.style.display = 'none';
         }
         function askForTime() {
             state.step = 'TOOL_TIME';
-            addAppBubble('How long will the operative use this tool today? Use the buttons below.');
+            addAppBubble('How long will they use this tool?');
             showTimeInputUI();
         }
 
@@ -728,9 +738,8 @@
         document.getElementById('sig-clear').onclick = function() { sigPad.clear(); };
         document.getElementById('sig-save').onclick = function() {
             if (sigPad.isEmpty()) { alert('Please sign first.'); return; }
-            var sigData = sigPad.toDataURL();
+            generatePDF(sigPad.toDataURL());
             sigModal.style.display = 'none';
-            generatePDF(sigData);
         };
 
         function generatePDF(sigData) {
@@ -748,25 +757,13 @@
                 try {
                     var logoFmt = (state.setup.logo.indexOf('data:image/png') === 0) ? 'PNG' : 'JPEG';
                     var imgProps = doc.getImageProperties(state.setup.logo);
-                    var maxLogoHeight = 22;
-                    var maxLogoWidth = 50;
-                    
+                    var maxLogoHeight = 22; var maxLogoWidth = 50;
                     var ratio = imgProps.width / imgProps.height;
-                    var finalH = maxLogoHeight;
-                    var finalW = finalH * ratio;
-                    
-                    if (finalW > maxLogoWidth) {
-                        finalW = maxLogoWidth;
-                        finalH = finalW / ratio;
-                    }
-                    
-                    var yPos = (35 - finalH) / 2;
-                    
-                    doc.addImage(state.setup.logo, logoFmt, margin, yPos, finalW, finalH);
+                    var finalH = maxLogoHeight; var finalW = finalH * ratio;
+                    if (finalW > maxLogoWidth) { finalW = maxLogoWidth; finalH = finalW / ratio; }
+                    doc.addImage(state.setup.logo, logoFmt, margin, (35 - finalH) / 2, finalW, finalH);
                     logoOffset = finalW + 10;
-                } catch (e) {
-                    console.error("Logo error", e);
-                }
+                } catch (e) {}
             }
             
             doc.setTextColor(255, 255, 255);
@@ -779,63 +776,42 @@
 
             var y = 45;
             doc.setTextColor(0, 0, 0);
-
             doc.setFontSize(14); doc.setFont('helvetica', 'bold');
             doc.text('Operative Details', margin, y); y += 8;
             doc.setDrawColor(200, 200, 200); doc.line(margin, y, pageWidth - margin, y); y += 8;
 
             doc.setFontSize(10); doc.setFont('helvetica', 'normal');
-            doc.text('Operative Name:', margin, y);
-            doc.setFont('helvetica', 'bold');
-            doc.text(state.currentOperative.name || 'N/A', margin + 40, y);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Employer:', margin + 110, y);
-            doc.setFont('helvetica', 'bold');
-            doc.text(state.currentOperative.employer || 'N/A', margin + 135, y);
+            doc.text('Operative Name:', margin, y); doc.setFont('helvetica', 'bold'); doc.text(state.currentOperative.name || 'N/A', margin + 40, y);
+            doc.setFont('helvetica', 'normal'); doc.text('Employer:', margin + 110, y); doc.setFont('helvetica', 'bold'); doc.text(state.currentOperative.employer || 'N/A', margin + 135, y);
             y += 7;
-            doc.setFont('helvetica', 'normal');
-            doc.text('Work Area:', margin, y);
-            doc.setFont('helvetica', 'bold');
-            doc.text(state.currentOperative.area || 'N/A', margin + 40, y);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Date:', margin + 110, y);
-            doc.setFont('helvetica', 'bold');
-            doc.text(new Date().toLocaleDateString('en-GB'), margin + 135, y);
+            doc.setFont('helvetica', 'normal'); doc.text('Work Area:', margin, y); doc.setFont('helvetica', 'bold'); doc.text(state.currentOperative.area || 'N/A', margin + 40, y);
+            doc.setFont('helvetica', 'normal'); doc.text('Date:', margin + 110, y); doc.setFont('helvetica', 'bold'); doc.text(new Date().toLocaleDateString('en-GB'), margin + 135, y);
             y += 12;
 
             doc.setFontSize(14); doc.setFont('helvetica', 'bold');
             doc.text('Safe Usage Limits', margin, y); y += 8;
             var tableWidth = pageWidth - 2 * margin;
-            doc.setFillColor(240, 240, 240);
-            doc.rect(margin, y - 5, tableWidth, 8, 'F');
+            doc.setFillColor(240, 240, 240); doc.rect(margin, y - 5, tableWidth, 8, 'F');
             doc.setDrawColor(150, 150, 150); doc.rect(margin, y - 5, tableWidth, 8);
             doc.setFontSize(7); doc.setFont('helvetica', 'bold');
-            
-            doc.text('Status', margin + 2, y);
-            doc.text('Tool Name & Type', margin + 35, y);
-            doc.text('Vib (m/s2)', margin + 105, y);
-            doc.text('Time to EAV', margin + 125, y);
-            doc.text('Time to ELV', margin + 145, y);
-            doc.text('Requested', margin + 165, y);
+            doc.text('Status', margin + 2, y); doc.text('Tool Name & Type', margin + 35, y);
+            doc.text('Vib (m/s2)', margin + 105, y); doc.text('Time to EAV', margin + 125, y);
+            doc.text('Time to ELV', margin + 145, y); doc.text('Requested', margin + 165, y);
             y += 5;
 
             state.currentOperative.tools.forEach(function(t) {
                 var eavHours = 8 * Math.pow(2.5 / t.vibration, 2);
-                var eavH = Math.floor(eavHours);
-                var eavM = Math.floor((eavHours - eavH) * 60);
+                var eavH = Math.floor(eavHours); var eavM = Math.floor((eavHours - eavH) * 60);
                 var elvHours = 8 * Math.pow(5.0 / t.vibration, 2);
-                var elvH = Math.floor(elvHours);
-                var elvM = Math.floor((elvHours - elvH) * 60);
+                var elvH = Math.floor(elvHours); var elvM = Math.floor((elvHours - elvH) * 60);
                 var status = t.requestedHours > elvHours ? 'ILLEGAL' : (t.requestedHours > eavHours ? 'OVER EAV' : 'SAFE');
 
                 doc.setFontSize(7); doc.setFont('helvetica', 'normal');
                 if (status === 'ILLEGAL') doc.setTextColor(220, 38, 38);
                 else if (status === 'OVER EAV') doc.setTextColor(255, 152, 0);
                 else doc.setTextColor(34, 197, 94);
-                
                 doc.text(status, margin + 2, y + 4);
                 doc.setTextColor(0, 0, 0);
-                
                 doc.text(t.brand + ' ' + t.model, margin + 35, y + 4);
                 doc.text(t.vibration.toString(), margin + 105, y + 4);
                 doc.text(eavH + 'h ' + eavM + 'm', margin + 125, y + 4);
@@ -855,20 +831,14 @@
                 doc.text(t.brand + ' ' + t.model, margin, y + 4);
                 doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
                 doc.text(t.category, margin, y + 9);
-                if (t.photo) {
-                    try { doc.addImage(t.photo, 'JPEG', margin + 72, y - 2, 35, 35); } catch (e) {}
-                } else {
-                    doc.setFont('helvetica', 'italic'); doc.setTextColor(150, 150, 150);
-                    doc.text('No photo', margin + 72, y + 15);
-                    doc.setTextColor(0, 0, 0); doc.setFont('helvetica', 'normal');
-                }
+                if (t.photo) { try { doc.addImage(t.photo, 'JPEG', margin + 72, y - 2, 35, 35); } catch (e) {} }
+                else { doc.setFont('helvetica', 'italic'); doc.setTextColor(150, 150, 150); doc.text('No photo', margin + 72, y + 15); doc.setTextColor(0, 0, 0); doc.setFont('helvetica', 'normal'); }
                 y += 38;
             });
 
             if (y > pageHeight - 50) { doc.addPage(); y = 20; }
             y += 5;
-            doc.setDrawColor(0, 0, 0);
-            doc.line(margin, y, margin + 70, y);
+            doc.setDrawColor(0, 0, 0); doc.line(margin, y, margin + 70, y);
             doc.setFontSize(9); doc.setFont('helvetica', 'bold');
             doc.text('Manager Signature', margin, y + 5);
             if (sigData) { try { doc.addImage(sigData, 'PNG', margin, y + 8, 50, 25); } catch (e) {} }
@@ -887,7 +857,7 @@
 
             var fileName = 'HAVS_' + state.currentOperative.name.replace(/\s/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.pdf';
             doc.save(fileName);
-            addAppBubble('Report generated and downloaded. Have a safe shift!');
+            addAppBubble('Report generated. Have a safe shift!');
             state.currentOperative = { name: '', employer: '', area: '', tools: [] };
         }
 
@@ -897,9 +867,8 @@
             var data = { setup: state.setup, timestamp: new Date().toISOString() };
             var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             var url = URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = url; a.download = 'HAVS_Backup_' + new Date().toISOString().slice(0, 10) + '.json';
-            a.click(); URL.revokeObjectURL(url);
+            var a = document.createElement('a'); a.href = url; a.download = 'HAVS_Backup_' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
+            URL.revokeObjectURL(url);
             document.getElementById('menu-modal').style.display = 'none';
         };
         document.getElementById('btn-restore').onclick = function() { document.getElementById('restore-input').click(); };
@@ -909,16 +878,12 @@
             reader.onload = function(ev) {
                 try {
                     var data = JSON.parse(ev.target.result);
-                    if (data.setup) { state.setup = data.setup; saveSetup(); alert('Data restored!'); location.reload(); }
-                    else { alert('Invalid file.'); }
+                    if (data.setup) { state.setup = data.setup; saveSetup(); alert('Restored!'); location.reload(); }
                 } catch (err) { alert('Error: ' + err.message); }
             };
             reader.readAsText(file);
-            document.getElementById('menu-modal').style.display = 'none';
         };
-        document.getElementById('btn-reset').onclick = function() {
-            if (confirm('Reset all setup data?')) { localStorage.removeItem('havs_setup'); location.reload(); }
-        };
+        document.getElementById('btn-reset').onclick = function() { if (confirm('Reset?')) { localStorage.removeItem('havs_setup'); location.reload(); } };
 
         document.getElementById('setup-save').onclick = function() {
             state.setup.company = document.getElementById('setup-company').value.trim();
@@ -926,13 +891,13 @@
             state.setup.number = document.getElementById('setup-number').value.trim();
             state.setup.name = document.getElementById('setup-name').value.trim();
             state.setup.role = document.getElementById('setup-role').value.trim();
-            if (!state.setup.company || !state.setup.project || !state.setup.name) { alert('Company Name, Project Name and Manager Name are required.'); return; }
+            if (!state.setup.company || !state.setup.project || !state.setup.name) { alert('Required fields missing.'); return; }
             var logoFile = document.getElementById('setup-logo').files[0];
             if (logoFile) {
                 var reader = new FileReader();
-                reader.onload = function(e) { state.setup.logo = e.target.result; saveSetup(); document.getElementById('setup-modal').style.display = 'none'; setTimeout(function() { askOperativeName(); }, 300); };
+                reader.onload = function(e) { state.setup.logo = e.target.result; saveSetup(); document.getElementById('setup-modal').style.display = 'none'; setTimeout(askOperativeName, 300); };
                 reader.readAsDataURL(logoFile);
-            } else { saveSetup(); document.getElementById('setup-modal').style.display = 'none'; setTimeout(function() { askOperativeName(); }, 300); }
+            } else { saveSetup(); document.getElementById('setup-modal').style.display = 'none'; setTimeout(askOperativeName, 300); }
         };
     </script>
 </body>
