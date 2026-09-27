@@ -861,17 +861,41 @@
             var pageHeight = doc.internal.pageSize.getHeight();
             var margin = 15;
 
+            // --- HEADER WITH SMART LOGO SCALING ---
             doc.setFillColor(7, 94, 84);
             doc.rect(0, 0, pageWidth, 35, 'F');
+            
+            var logoOffset = 0;
             if (state.setup.logo) {
                 try {
                     var logoFmt = (state.setup.logo.indexOf('data:image/png') === 0) ? 'PNG' : 'JPEG';
-                    doc.addImage(state.setup.logo, logoFmt, margin, 5, 25, 25);
-                } catch (e) {}
+                    // Get image properties to calculate aspect ratio
+                    var imgProps = doc.getImageProperties(state.setup.logo);
+                    var maxLogoHeight = 22; // Max height in mm
+                    var maxLogoWidth = 50;  // Max width in mm
+                    
+                    var ratio = imgProps.width / imgProps.height;
+                    var finalH = maxLogoHeight;
+                    var finalW = finalH * ratio;
+                    
+                    // If it's too wide, scale by width instead
+                    if (finalW > maxLogoWidth) {
+                        finalW = maxLogoWidth;
+                        finalH = finalW / ratio;
+                    }
+                    
+                    // Center vertically within the 35mm header
+                    var yPos = (35 - finalH) / 2;
+                    
+                    doc.addImage(state.setup.logo, logoFmt, margin, yPos, finalW, finalH);
+                    logoOffset = finalW + 10; // Push text to the right of the logo
+                } catch (e) {
+                    console.error("Logo error", e);
+                }
             }
+            
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(18); doc.setFont('helvetica', 'bold');
-            var logoOffset = state.setup.logo ? 35 : 0;
             doc.text('HAVS DAILY BRIEFING', margin + logoOffset, 14);
             doc.setFontSize(9); doc.setFont('helvetica', 'normal');
             doc.text((state.setup.company || 'N/A') + ' | PROJECT: ' + (state.setup.project || 'N/A') + ' | No: ' + (state.setup.number || 'N/A'), margin + logoOffset, 22);
@@ -904,6 +928,7 @@
             doc.text(new Date().toLocaleDateString('en-GB'), margin + 135, y);
             y += 12;
 
+            // --- SAFE USAGE LIMITS TABLE (FIXED SPACING) ---
             doc.setFontSize(14); doc.setFont('helvetica', 'bold');
             doc.text('Safe Usage Limits', margin, y); y += 8;
             var tableWidth = pageWidth - 2 * margin;
@@ -911,12 +936,14 @@
             doc.rect(margin, y - 5, tableWidth, 8, 'F');
             doc.setDrawColor(150, 150, 150); doc.rect(margin, y - 5, tableWidth, 8);
             doc.setFontSize(7); doc.setFont('helvetica', 'bold');
-            doc.text('Status', margin + 2, y);
-            doc.text('Tool Name & Type', margin + 12, y);
-            doc.text('Vib (m/s2)', margin + 72, y);
-            doc.text('Time to EAV', margin + 92, y);
-            doc.text('Time to ELV', margin + 115, y);
-            doc.text('Requested', margin + 138, y);
+            
+            // New X positions to prevent overlap
+            doc.text('Status', margin + 2, y);          // 17mm
+            doc.text('Tool Name & Type', margin + 35, y); // 50mm (Moved right!)
+            doc.text('Vib (m/s2)', margin + 105, y);      // 120mm
+            doc.text('Time to EAV', margin + 125, y);     // 140mm
+            doc.text('Time to ELV', margin + 145, y);     // 160mm
+            doc.text('Requested', margin + 165, y);       // 180mm
             y += 5;
 
             state.currentOperative.tools.forEach(function(t) {
@@ -927,17 +954,21 @@
                 var elvH = Math.floor(elvHours);
                 var elvM = Math.floor((elvHours - elvH) * 60);
                 var status = t.requestedHours > elvHours ? 'ILLEGAL' : (t.requestedHours > eavHours ? 'OVER EAV' : 'SAFE');
+
                 doc.setFontSize(7); doc.setFont('helvetica', 'normal');
                 if (status === 'ILLEGAL') doc.setTextColor(220, 38, 38);
                 else if (status === 'OVER EAV') doc.setTextColor(255, 152, 0);
                 else doc.setTextColor(34, 197, 94);
+                
                 doc.text(status, margin + 2, y + 4);
                 doc.setTextColor(0, 0, 0);
-                doc.text(t.brand + ' ' + t.model, margin + 12, y + 4);
-                doc.text(t.vibration.toString(), margin + 72, y + 4);
-                doc.text(eavH + 'h ' + eavM + 'm', margin + 92, y + 4);
-                doc.text(elvH + 'h ' + elvM + 'm', margin + 115, y + 4);
-                doc.text(t.requestedHours + ' hrs', margin + 138, y + 4);
+                
+                // Tool Name starts further right now
+                doc.text(t.brand + ' ' + t.model, margin + 35, y + 4); 
+                doc.text(t.vibration.toString(), margin + 105, y + 4);
+                doc.text(eavH + 'h ' + eavM + 'm', margin + 125, y + 4);
+                doc.text(elvH + 'h ' + elvM + 'm', margin + 145, y + 4);
+                doc.text(t.requestedHours + ' hrs', margin + 165, y + 4);
                 y += 7;
             });
             y += 5;
