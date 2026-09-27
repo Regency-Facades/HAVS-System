@@ -1,0 +1,88 @@
+{
+  "categories": [
+    {
+      "category": "Cordless Combi Drills (12V - 18V)",
+      "tools": [
+        { "brand": "Makita", "model": "DDF484 (18V Driver)", "vibration": 1.5, "note": "Drilling wood/metal only." },
+        { "brand": "Makita", "model": "DHP484 (18V Combi)", "vibration": 2.5, "note": "Hammer mode masonry." },
+        { "brand": "Makita", "model": "DHP486 (18V Brushless)", "vibration": 2.0, "note": "Brushless high torque." },
+        { "brand": "Makita", "model": "DF333D (12V CXT)", "vibration": 2.0, "note": "Compact 12V." },
+        { "brand": "DeWalt", "model": "DCD796 (18V XR)", "vibration": 2.5, "note": "Brushless combi." },
+        { "brand": "DeWalt", "model": "DCD996 (18V XR Premium)", "vibration": 3.0, "note": "High performance." },
+        { "brand": "DeWalt", "model": "DCD701 (12V)", "vibration": 2.0, "note": "Compact 12V." },
+        { "brand": "Bosch", "model": "GSR 18V-50 (Blue)", "vibration": 2.0, "note": "Standard professional." },
+        { "brand": "Bosch", "model": "GSB 18V-50 (Blue Combi)", "vibration": 5.5, "note": "Hammer mode." },
+        { "brand": "Bosch", "model": "GSR 18V-120C (High Torque)", "vibration": 2.5, "note": "Heavy duty 18V." },
+        { "brand": "Milwaukee", "model": "M18 FPD2 (Fuel Combi)", "vibration": 2.8, "note": "Brushless Fuel." },
+        { "brand": "Milwaukee", "model": "M12 FPD (12V Fuel)", "vibration": 2.5, "note": "Compact Fuel." },
+        { "brand": "Festool", "model": "T 18+3 (18V)", "vibration": 1.5, "note": "Premium low vibration." },
+        { "brand": "Metabo", "model": "BS 18 LTX (18V)", "vibration": 3.0, "note": "High torque." },
+        { "brand": "Hitachi / Metabo HPT", "model": "DS18DBFL2 (18V Brushless)", "vibration": 2.5, "note": "Multi-volt compatible." },
+        { "brand": "Panasonic", "model": "EY74A2 (18V Multivolt)", "vibration": 2.0, "note": "Brushless." }
+      ]
+    },
+    {
+      "category": "Impact Drivers & Wrenches",
+      "tools": [
+        { "brand": "Makita", "model": "DTW285 (Impact Wrench)", "vibration": 14.0, "note": "High vibration 18V." },
+        { "brand": "Makita", "model": "DTD153 (Impact Driver)", "vibration": 12.0, "note": "Standard 18V." },
+        { "brand": "DeWalt", "model": "DCF887 (Impact Driver)", "vibration": 12.5, "note": "XR Brushless." },
+        { "brand": "DeWalt", "model": "DCFW288 (Cordless Ratchet)", "vibration": 10.0, "note": "12V/18V." },
+        { "brand": "Bosch", "model": "GDR 18V-160 (Impact)", "vibration": 11.0, "note": "Professional." },
+        { "brand": "Milwaukee", "model": "M18 FID2 (Fuel Impact)", "vibration": 11.5, "note": "One-key capable." },
+        { "brand": "Milwaukee", "model": "M18 FIW2 (Impact Wrench)", "vibration": 15.0, "note": "High torque." },
+        { "brand": "Festool", "model": "T 18 Impact", "vibration": 9.0, "note": "Low vibration for class." }
+      ]
+    },
+    {
+      "category": "SDS Plus Rotary Hammers (Corded & Cordless)",
+      "tools": [
+        { "brand": "Bosch", "model": "GBH 2-26 DRE", "vibration": 11.0, "note": "Standard 3-mode." },
+        { "brand": "Bosch", "model": "GBH 2-28 F", "vibration": 9.0, "note": "AVR (Anti-vibration)." },
+        { "brand": "Bosch", "model": "GBH 3-28 DFR", "vibration": 8.5, "note": "Professional SDS Plus." },
+        { "brand": "Bosch", "model": "GBH 18V-26 (Cordless)", "vibration": 9.5, "note": "18V SDS Plus." },
+        { "brand": "DeWalt", "model": "D25143K", "vibration": 12.5, "note": "Standard 3-mode." },
+        { "brand": "DeWalt", "model": "D25303DH", "vibration": 10.0, "note": "AVC (Active Vibration Control)." },
+        { "brand": "DeWalt", "model": "DCH253 (18V Cordless)", "vibration": 9.0, "note": "XR Brushless." },
+        { "brand": "Hilti", "model": "TE 2-A22", "vibration": 8.0, "note": "Compact 22V." },
+        { "brand": "Hilti", "model": "TE 6-A22", "vibration": 9.5, "note": "AVR engaged." },
+        { "brand": "Hilti", "model": "TE 70-AVR", "vibration": 10.0, "note": "Heavy SDS Plus." },
+        { "brand": "Makita", "model": "HR2470", "vibration": 10.5, "note": "Standard 3-mode." },
+        { "brand": "Makita", "model": "HR2630", "vibration": 9.5, "note": "AVT (Anti-vibration)." },
+        { "brand": "Makita", "model": "HR1841 (18V Cordless)", "vibration": 8.5, "note": "Compact SDS Plus." },
+        { "brand": "Milwaukee", "model": "M18 CHX (Fuel SDS)", "vibration": 9.0, "note": "Brushless." },
+        { "brand": "Metabo", "model": "KHA 18 LTX", "vibration": 9.5, "note": "18V SDS Plus." },
+        { "brand": "Festool", "model": "BHC 18 Li 5.0", "vibration": 8.0, "note": "Premium low vibration." }
+      ]
+    },
+    {
+      "category": "SDS Max & Heavy Breakers",
+      "tools": [
+        { "brand": "Bosch", "model": "GBH 5-40 DCE", "vibration": 13.0, "note": "SDS Max combi." },
+        { "brand": "Bosch", "model": "GSH 16-28", "vibration": 17.0, "note": "30kg Demolition breaker." },
+        { "brand": "Bosch", "model": "GSH 27 VC", "vibration": 12.0, "note": "Vibration control 60kg." },
+        { "brand": "DeWalt", "model": "D25762K", "vibration": 10.5, "note": "SDS Max combi." },
+        { "brand": "DeWalt", "model": "D25899", "vibration": 15.0, "note": "17kg Breaker." },
+        { "brand": "Hilti", "model": "TE 300-AVR", "vibration": 12.5, "note": "Medium breaker." },
+        { "brand": "Hilti", "model": "TE 1000-AVR", "vibration": 11.0, "note": "Large breaker 28kg." },
+        { "brand": "Hilti", "model": "TE 3000-AVR", "vibration": 8.5, "note": "AVR heavy breaker." },
+        { "brand": "Makita", "model": "HM0830", "vibration": 11.5, "note": "SDS Max chipping." },
+        { "brand": "Makita", "model": "HM1203C", "vibration": 16.0, "note": "Heavy breaker 30kg." },
+        { "brand": "Makita", "model": "HM1303C", "vibration": 10.0, "note": "AVT Floor chipping." },
+        { "brand": "Milwaukee", "model": "M18 FHB (Fuel Breaker)", "vibration": 12.0, "note": "Cordless breaker." }
+      ]
+    },
+    {
+      "category": "Core Drilling & Right Angle Drills",
+      "tools": [
+        { "brand": "Bosch", "model": "GDB 350 WE", "vibration": 3.0, "note": "Diamond core drill." },
+        { "brand": "Bosch", "model": "GDB 1600 DE", "vibration": 2.5, "note": "Large core drill." },
+        { "brand": "DeWalt", "model": "D25820", "vibration": 4.0, "note": "Core drill 160mm." },
+        { "brand": "Hilti", "model": "DD 150", "vibration": 2.0, "note": "Handheld core drill." },
+        { "brand": "Makita", "model": "DHR171 (Core Drill)", "vibration": 2.5, "note": "18V Core drill." },
+        { "brand": "Makita", "model": "DA6301 (Right Angle)", "vibration": 4.5, "note": "Right angle drill." },
+        { "brand": "DeWalt", "model": "DWD460K (Right Angle)", "vibration": 4.0, "note": "Right angle drill." }
+      ]
+    }
+  ]
+}
